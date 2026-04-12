@@ -2,22 +2,6 @@ name: Fetch RMI Tenders
 
 on:
   workflow_dispatch:
-    inputs:
-      date_from:
-        description: "Committee date from (YYYY-MM-DD)"
-        required: true
-        default: "2024-04-01"
-      date_to:
-        description: "Committee date to (YYYY-MM-DD)"
-        required: true
-        default: "2026-04-11"
-      max_rows:
-        description: "Max tenders per category"
-        required: true
-        default: "50"
-  push:
-    paths:
-      - ".github/workflows/fetch-rmi-tenders.yml"
 
 jobs:
   fetch:
@@ -29,86 +13,111 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install requests pandas openpyxl
+      - run: pip install requests
 
       - name: Fetch tenders from RMI
-        env:
-          DATE_FROM: ${{ github.event.inputs.date_from || '2024-04-01' }}
-          DATE_TO:   ${{ github.event.inputs.date_to   || '2026-04-11' }}
-          MAX_ROWS:  ${{ github.event.inputs.max_rows  || '50' }}
         run: |
-          python - <<'PY'
-          import os, json, time
+          python3 << 'PYEOF'
+          import json, time, sys
           from datetime import datetime
           import requests
 
-          DATE_FROM = datetime.strptime(os.environ['DATE_FROM'], '%Y-%m-%d')
-          DATE_TO   = datetime.strptime(os.environ['DATE_TO'],   '%Y-%m-%d')
-          MAX_ROWS  = int(os.environ['MAX_ROWS'])
+          # Hardcoded parameters
+          DATE_FROM = datetime(2024, 4, 1)
+          DATE_TO   = datetime(2026, 4, 12)
 
-          BASE = 'https://apps.land.gov.il/MichrazimSite/api'
+          BASE = "https://apps.land.gov.il/MichrazimSite/api"
           HEADERS = {
-              'User-Agent': 'datagov-external-client',
-              'Content-Type': 'application/json',
-              'Accept': 'application/json, text/plain, */*',
-              'Origin': 'https://apps.land.gov.il',
-              'Referer': 'https://apps.land.gov.il/MichrazimSite/',
+              "User-Agent": "datagov-external-client",
+              "Content-Type": "application/json",
+              "Accept": "application/json, text/plain, */*",
+              "Origin": "https://apps.land.gov.il",
+              "Referer": "https://apps.land.gov.il/MichrazimSite/",
           }
-          S = requests.Session(); S.headers.update(HEADERS)
-          def fmt(d): return d.strftime('%d/%m/%y')
+          S = requests.Session()
+          S.headers.update(HEADERS)
 
-          def search(tender_types=None, land_uses=None):
-              p = {
-                  'ActiveQuickSearch': False, 'ActiveMichraz': False,
-                  'VaadaDate': {'from': fmt(DATE_FROM), 'to': fmt(DATE_TO)},
-                  'hasResults': True,
-              }
-              if tender_types: p['SugMichraz']  = tender_types
-              if land_uses:    p['YeudMichraz'] = land_uses
-              r = S.post(f'{BASE}/SearchApi/Search', json=p, timeout=30)
-              r.raise_for_status()
-              d = r.json()
-              return d.get('results', d) if isinstance(d, dict) else d
+          # Step 1: Fetch ALL tenders with results (no date filter - API ignores it)
+          payload = {
+              "ActiveQuickSearch": False,
+              "ActiveMichraz": False,
+              "hasResults": True,
+          }
+          print(f"[1] Fetching all tenders with results...", flush=True)
+          r = S.post(f"{BASE}/SearchApi/Search", json=payload, timeout=60)
+          r.raise_for_status()
+          data = r.json()
+          all_tenders = data if isinstance(data, list) else data.get("results", [])
+          print(f"[1] Got {len(all_tenders)} total tenders from API", flush=True)
 
-          def details(mid):
-              r = S.get(f'{BASE}/MichrazDetailsApi/Get',
-                        params={'michrazID': mid}, timeout=30)
-              r.raise_for_status()
-              return r.json()
+          # Step 2: Client-side filter by VaadaDate
+          def parse_date(s):
+              if not s: return None
+              try: return datetime.fromisoformat(s.replace("+03:00","").replace("+02:00",""))
+              except: return None
 
-          jobs = [
-              ('mechir_lemishtaken', {'tender_types': [2, 3]}),
-              ('yazamot',             {'tender_types': [1]}),
-              ('malonaut',            {'land_uses':    [4, 6, 7]}),
-          ]
+          filtered = []
+          for t in all_tenders:
+              vd = parse_date(t.get("VaadaDate"))
+              if vd and DATE_FROM <= vd <= DATE_TO:
+                  filtered.append(t)
+          print(f"[2] After date filter ({DATE_FROM.date()} to {DATE_TO.date()}): {len(filtered)} tenders", flush=True)
 
-          out = {'fetched_at': datetime.utcnow().isoformat(),
-                 'date_from':  DATE_FROM.strftime('%Y-%m-%d'),
-                 'date_to':    DATE_TO.strftime('%Y-%m-%d'),
-                 'categories': {}}
+          # Step 3: Split by category
+          cats = {
+              "mechir_lemishtaken": [],  # SugMichraz 2 or 3
+              "yazamot": [],             # SugMichraz 1
+              "malonaut": [],            # YeudMichraz 4, 6, or 7
+          }
+          for t in filtered:
+              sug = t.get("KodSugMichraz")
+              yeud = t.get("KodYeudMichraz")
+              if yeud in (4, 6, 7):
+                  cats["malonaut"].append(t)
+              elif sug in (2, 3):
+                  cats["mechir_lemishtaken"].append(t)
+              elif sug == 1:
+                  cats["yazamot"].append(t)
 
-          for name, params in jobs:
-              print(f'\n=== {name} ===', flush=True)
-              basics = search(**params) or []
-              print(f'  got {len(basics)} basics', flush=True)
-              basics = basics[:MAX_ROWS]
-              cat = {'search_count': len(basics), 'tenders': []}
+          for name, lst in cats.items():
+              print(f"  {name}: {len(lst)} tenders", flush=True)
+
+          # Step 4: Fetch details for up to 50 per category
+          out = {
+              "fetched_at": datetime.utcnow().isoformat(),
+              "date_from": str(DATE_FROM.date()),
+              "date_to": str(DATE_TO.date()),
+              "total_with_results": len(all_tenders),
+              "total_in_date_range": len(filtered),
+              "categories": {},
+          }
+
+          for name, basics in cats.items():
+              print(f"\n=== {name} ({len(basics)} basics, fetching details for max 50) ===", flush=True)
+              basics = basics[:50]
+              cat = {"search_count": len(basics), "tenders": []}
               for i, b in enumerate(basics, 1):
-                  mid = b.get('MichrazID') or b.get('michraz_id')
+                  mid = b.get("MichrazID")
                   if not mid: continue
                   try:
-                      d = details(int(mid))
-                      cat['tenders'].append({'basic': b, 'details': d})
-                      print(f'  [{i}/{len(basics)}] {mid} OK', flush=True)
+                      time.sleep(0.5)
+                      r2 = S.get(f"{BASE}/MichrazDetailsApi/Get",
+                                 params={"michrazID": mid}, timeout=30)
+                      r2.raise_for_status()
+                      det = r2.json()
+                      cat["tenders"].append({"basic": b, "details": det})
+                      vaada = b.get("VaadaDate","")[:10]
+                      mname = b.get("MichrazName","?")
+                      print(f"  [{i}/{len(basics)}] {mname} vaada={vaada} OK", flush=True)
                   except Exception as e:
-                      print(f'  [{i}/{len(basics)}] {mid} FAIL: {e}', flush=True)
-                  time.sleep(0.6)
-              out['categories'][name] = cat
+                      print(f"  [{i}/{len(basics)}] {mid} FAIL: {e}", flush=True)
+              out["categories"][name] = cat
 
-          with open('rmi_raw.json', 'w', encoding='utf-8') as f:
+          with open("rmi_raw.json", "w", encoding="utf-8") as f:
               json.dump(out, f, ensure_ascii=False, indent=2)
-          print(f'wrote rmi_raw.json ({os.path.getsize("rmi_raw.json")} bytes)')
-          PY
+          sz = len(open("rmi_raw.json").read())
+          print(f"\nDone! wrote rmi_raw.json ({sz:,} bytes)")
+          PYEOF
 
       - uses: actions/upload-artifact@v4
         with:
@@ -116,16 +125,16 @@ jobs:
           path: rmi_raw.json
           retention-days: 14
 
-      - name: Commit raw JSON to branch
+      - name: Commit to repo
         run: |
-          git config user.name  'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           mkdir -p output
-          mv rmi_raw.json output/rmi_raw.json
+          cp rmi_raw.json output/rmi_raw.json
           git add output/rmi_raw.json
           if git diff --cached --quiet; then
-            echo 'nothing to commit'
+            echo "nothing to commit"
           else
-            git commit -m "ci: fetch RMI raw JSON"
+            git commit -m "ci: fetch RMI tenders $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push
           fi
