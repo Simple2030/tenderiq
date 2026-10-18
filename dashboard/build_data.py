@@ -11,13 +11,24 @@ and every bid placed on the lot.
 
 Derived metrics, each computed only when its inputs exist in the source:
   bidders            number of bids on the lot (mpHatzaaotMitcham)
-  premium_pct        winning bid / reserve price - 1        (needs MechirSaf)
-  runner_up          highest bid strictly below the winning bid
+  vs_appraisal_pct   winning bid / land appraisal - 1       (needs mechirShuma)
+  premium_pct        winning bid / reserve price - 1        (needs MechirSaf).
+                     The reserve is published at a fraction of the appraisal
+                     (median about a quarter), so this ratio says how low the
+                     reserve was, not how hard bidders competed.
+  win_rank           position of the winning bid among all bids, 1 = highest
+  runner_up          the next bid below the winning bid; a second bid equal
+                     to the winning bid counts, giving a 0% gap
   gap_pct            winning bid / runner_up - 1            (needs 2+ bids)
   top_not_winner     a bid higher than the winning bid exists on the lot.
                      The source marks the winning bid (HatzaaDescription=1)
-                     but not why a higher bid lost, so no reason is given.
-  land_ppsqm         winning bid / lot area (Shetach), land only
+                     but not why a higher bid lost. max_to_win records the
+                     tender's cap on lots per bidder, when published.
+  land_ppsqm         winning bid / lot area (Shetach), land only; left empty
+                     for lots over 50,000 sqm (quarries, regional plots)
+
+Lots are kept when the source gives a positive winning amount. Lots without one
+are housing-lottery allocations (no price, no bids) or have no winner.
   dev_share_pct      development costs / (winning bid + development costs)
 
 Usage:  python3 dashboard/build_data.py [raw.json] [out.json]
@@ -47,11 +58,11 @@ _QUOTES = re.compile(r"['\"״׳`’‘“”]+")
 _LTD = re.compile(r'בע\s*"?\s*[מם]\b')
 _ORG = re.compile(r'\b(חברה|שותפות|אגודה|עמותה|קיבוץ|מושב|קבוצת|רשת)\b')
 _BIZ = re.compile(
-    r'\b(הנדסה|יזמות|ייזום|יזום|נדלן|נדל"ן|השקעות|אחזקות|החזקות|פיתוח|בניה|'
+    r'\b(הנדסה|יזמות|ייזום|יזום|נדלן|נדל"ן|השקעות|אחזקות|החזקות|פיתוח|'
     r'בנייה|בנין|בניין|תעשיות|נכסים|מגורים|קבלנות|תשתיות|ליסינג|מלונות|'
-    r'מלונאות|תיירות|סחר|מסחר|הובלות|שרותים|שירותים|ניהול|תכנון|קבלן|'
+    r'מלונאות|תיירות|מסחר|הובלות|שרותים|שירותים|ניהול|תכנון|קבלן|'
     r'בונה|בוני|מרכזי)\b')
-INDIVIDUAL_KEEP_FROM = 3_000_000  # individuals above this bought land, not a lottery
+MAX_AREA_FOR_PPSQM = 50_000  # larger lots are quarries or regional plots
 
 
 def is_company(name):
@@ -70,16 +81,24 @@ def pos(v):
     return v if isinstance(v, (int, float)) and v > 0 else None
 
 
+def place_name(code, hood, cities):
+    """City name when the code is known; otherwise the area name the tender
+    gives (industrial zones and regional councils are missing from the table)."""
+    city = cities.get(code)
+    if city:
+        return city.replace(")יישוב(", "").replace("(יישוב)", "").strip(), True
+    return (hood or f"קוד יישוב {code}"), False
+
+
 def build(raw, cities):
-    lots, dropped = [], {"lottery": 0, "system": 0, "no_winner": 0, "no_lots": 0}
+    lots = []
+    dropped = {"unpriced": 0, "system": 0, "no_winner": 0}
     for key, body in raw["categories"].items():
         for entry in body["tenders"]:
             b, det = entry["basic"], entry["details"]
-            tiks = det.get("Tik") or []
-            if not tiks:
-                dropped["no_lots"] += 1
-                continue
-            for tik in tiks:
+            hood = (b.get("Shchuna") or "").strip() or None
+            place, mapped = place_name(b.get("KodYeshuv"), hood, cities)
+            for tik in det.get("Tik") or []:
                 winner = (tik.get("ShemZoche") or "").strip()
                 if not winner:
                     dropped["no_winner"] += 1
@@ -88,45 +107,53 @@ def build(raw, cities):
                     dropped["system"] += 1
                     continue
                 win = pos(tik.get("SchumZchiya"))
-                company = is_company(winner)
-                if not company and not (win and win >= INDIVIDUAL_KEEP_FROM):
-                    dropped["lottery"] += 1
+                if not win:
+                    dropped["unpriced"] += 1
                     continue
-                bids = sorted({y["HatzaaSum"] for y in tik.get("mpHatzaaotMitcham") or []
-                               if pos(y.get("HatzaaSum"))}, reverse=True)
-                bid_rows = [{"sum": y["HatzaaSum"], "win": y.get("HatzaaDescription") == 1}
-                            for y in tik.get("mpHatzaaotMitcham") or [] if pos(y.get("HatzaaSum"))]
-                bid_rows.sort(key=lambda r: -r["sum"])
+                raw_bids = [y for y in tik.get("mpHatzaaotMitcham") or [] if pos(y.get("HatzaaSum"))]
+                bid_rows = sorted(({"sum": y["HatzaaSum"], "win": y.get("HatzaaDescription") == 1}
+                                   for y in raw_bids), key=lambda r: -r["sum"])
+                sums = [r["sum"] for r in bid_rows]
+                others = list(sums)
+                if win in others:
+                    others.remove(win)          # the winning bid itself
+                runner = max((x for x in others if x <= win), default=None)
                 reserve = pos(tik.get("MechirSaf"))
+                appraisal = pos(tik.get("mechirShuma"))
                 dev = pos(tik.get("HotzaotPituach"))
                 area = pos(tik.get("Shetach"))
-                runner = next((s for s in bids if win and s < win), None)
                 lots.append({
                     "id": f'{b.get("MichrazID")}-{tik.get("TikID")}',
                     "tender": b.get("MichrazName"),
                     "url": f'https://apps.land.gov.il/MichrazimSite/#/michraz/{b.get("MichrazID")}',
                     "date": (b.get("VaadaDate") or "")[:10] or None,
-                    "city": cities.get(b.get("KodYeshuv")),
-                    "hood": (b.get("Shchuna") or "").strip() or None,
+                    "place": place,
+                    "place_is_city": mapped,
+                    "hood": hood,
                     "cat": CATEGORY_HE.get(key, key),
                     "lot": (tik.get("MitchamName") or "").strip() or None,
                     "winner": winner,
-                    "kind": "חברה" if company else "פרטי",
+                    "kind": "חברה" if is_company(winner) else "פרטי",
                     "win": win,
                     "reserve": reserve,
+                    "appraisal": appraisal,
                     "dev": dev,
                     "area": area,
-                    "units": pos(b.get("YechidotDiur")),
+                    "tender_units": pos(b.get("YechidotDiur")),
+                    "max_to_win": det.get("MaxToWin"),
                     "gush": ", ".join(f'{g.get("Gush", "")}/{g.get("Helka", "")}'
                                       for g in tik.get("GushHelka") or []) or None,
                     "bids": bid_rows,
                     "bidders": len(bid_rows) or None,
-                    "premium_pct": (win / reserve - 1) * 100 if win and reserve else None,
+                    "win_rank": 1 + sum(1 for x in sums if x > win) if sums else None,
+                    "vs_appraisal_pct": (win / appraisal - 1) * 100 if appraisal else None,
+                    "premium_pct": (win / reserve - 1) * 100 if reserve else None,
+                    "reserve_of_appraisal_pct": reserve / appraisal * 100 if reserve and appraisal else None,
                     "runner_up": runner,
-                    "gap_pct": (win / runner - 1) * 100 if win and runner else None,
-                    "top_not_winner": bool(win and bids and bids[0] > win),
-                    "land_ppsqm": win / area if win and area else None,
-                    "dev_share_pct": dev / (win + dev) * 100 if win and dev else None,
+                    "gap_pct": (win / runner - 1) * 100 if runner else None,
+                    "top_not_winner": bool(sums and sums[0] > win),
+                    "land_ppsqm": win / area if area and area <= MAX_AREA_FOR_PPSQM else None,
+                    "dev_share_pct": dev / (win + dev) * 100 if dev else None,
                 })
     meta = {
         "fetched": raw["fetched_at"][:10],
@@ -148,7 +175,7 @@ def main():
     lots = data["lots"]
     print(f"{OUT}: {len(lots)} lots, "
           f"{sum(1 for l in lots if l['bidders'])} with bids, "
-          f"{sum(1 for l in lots if l['premium_pct'] is not None)} with reserve price, "
+          f"{sum(1 for l in lots if l['vs_appraisal_pct'] is not None)} with appraisal, "
           f"dropped {data['meta']['dropped']}")
 
 

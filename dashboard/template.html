@@ -2,181 +2,218 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: navy frame → findings → KPI strip → filters → competition charts → market charts → lot table with bid ladders → method */
+/* Layout: navy frame → KPI strip → filters + active tokens → findings → competition row → market row → players → lot table with bid ladder → method → contact */
 :root{
   --frame:#0A1A3F; --frame2:#12306E; --on-frame:#FFFFFF; --on-frame2:#C9D6FF;
-  --bg:#F6F4EF; --card:#FFFFFF; --line:#E3DFD6; --line2:#F0EDE6; --head:#FBFAF7;
-  --fg:#1E2A47; --muted:#5F6879; --accent:#315BFF; --accent-soft:#EEF2FF; --accent-line:#D6DEFF;
-  --up:#187657; --up-soft:#E6F4EE; --warn:#8A5A00; --warn-soft:#FFF6E2; --track:#EFECE6;
+  --bg:#F3EFE6; --card:#FFFDF9; --line:#E2DCCF; --line2:#EEE9DF; --head:#F8F5EE;
+  --fg:#1B2540; --muted:#5C6578; --data:#2B4C9B; --data2:#9DB0DD; --accent:#315BFF; --accent-soft:#ECF0FF; --accent-line:#CFD9FF;
+  --up:#17714F; --up-soft:#E3F2EA; --down:#A23A47; --warn:#8A5A00; --warn-soft:#FBF1DC; --track:#ECE7DC; --on-accent:#FFFFFF;
   --sans:"Heebo","Segoe UI",Arial,sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0E1424; --card:#151D33; --line:#26314F; --line2:#1D2742; --head:#18213A;
-  --fg:#E7ECF7; --muted:#9AA6C0; --accent:#6F8CFF; --accent-soft:#1A2550; --accent-line:#2C3A78;
-  --up:#4FC08D; --up-soft:#12342A; --warn:#E8B55A; --warn-soft:#3A2C10; --track:#222C48; color-scheme:dark}}
+  --fg:#E7ECF7; --muted:#9AA6C0; --data:#7E9BEA; --data2:#3C4F86; --accent:#8AA2FF; --accent-soft:#1A2550; --accent-line:#2C3A78;
+  --up:#4FC08D; --up-soft:#12342A; --down:#E07A86; --warn:#E8B55A; --warn-soft:#3A2C10; --track:#222C48; --on-accent:#0A1A3F; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0E1424; --card:#151D33; --line:#26314F; --line2:#1D2742; --head:#18213A;
-  --fg:#E7ECF7; --muted:#9AA6C0; --accent:#6F8CFF; --accent-soft:#1A2550; --accent-line:#2C3A78;
-  --up:#4FC08D; --up-soft:#12342A; --warn:#E8B55A; --warn-soft:#3A2C10; --track:#222C48; color-scheme:dark}
+  --fg:#E7ECF7; --muted:#9AA6C0; --data:#7E9BEA; --data2:#3C4F86; --accent:#8AA2FF; --accent-soft:#1A2550; --accent-line:#2C3A78;
+  --up:#4FC08D; --up-soft:#12342A; --down:#E07A86; --warn:#E8B55A; --warn-soft:#3A2C10; --track:#222C48; --on-accent:#0A1A3F; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;margin:0}
 .wrap{max-width:1360px;margin:0 auto;padding-inline:16px}
-header.top{background:linear-gradient(90deg,var(--frame),var(--frame2));color:var(--on-frame);padding-block:14px}
-header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap}
+header.top{background:linear-gradient(90deg,var(--frame),var(--frame2));color:var(--on-frame);padding-block:12px;border-bottom:1px solid #2C3A78}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px}
-.brand .mark{width:32px;height:32px;border:1.5px solid #6F8CFF;display:grid;place-items:center;font-weight:700;font-size:15px;flex:none}
-.brand h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
+.brand .mark{width:30px;height:30px;border:1.5px solid #6F8CFF;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.brand h1{font-size:17px;font-weight:700;margin:0;letter-spacing:-.01em}
 .brand small{display:block;font-size:12px;color:var(--on-frame2)}
 .pills{display:flex;gap:6px;flex-wrap:wrap}
-.pill{font-size:12px;color:var(--on-frame2);border:1px solid #ffffff2e;padding:3px 10px;white-space:nowrap}
-main{padding-block:18px 40px;display:grid;gap:14px}
+.pill{font-size:12px;color:var(--on-frame2);border:1px solid #ffffff2e;padding:2px 10px;white-space:nowrap}
+main{padding-block:16px 40px;display:grid;gap:14px}
 h2{font-size:15px;font-weight:600;margin:0;text-wrap:balance}
+h3{font-size:13px;font-weight:600;margin:0 0 6px}
 .sub{margin:2px 0 12px;font-size:12px;color:var(--muted)}
 .card{background:var(--card);border:1px solid var(--line);padding:14px 16px;min-width:0}
-.findings{border-inline-start:3px solid var(--accent)}
-.findings ul{margin:8px 0 0;padding-inline-start:18px;display:grid;gap:4px}
-.findings li{font-size:14px}
-.findings li b{font-variant-numeric:tabular-nums}
-.scope{font-size:12px;color:var(--muted);margin-top:8px}
-.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-.kpi{background:var(--card);border:1px solid var(--line);padding:11px 13px;min-width:0}
-.kpi label{display:block;font-size:12px;color:var(--muted);font-weight:500}
-.kpi strong{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:1px;font-variant-numeric:tabular-nums;direction:ltr;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--card);border:1px solid var(--line)}
+.kpi{padding:12px 14px;min-width:0;border-inline-start:1px solid var(--line2)}
+.kpi:first-child{border-inline-start:0}
+.kpi label{display:block;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.02em}
+.kpi strong{display:block;font-size:22px;font-weight:600;letter-spacing:-.01em;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi strong small{font-size:13px;font-weight:500;color:var(--muted)}
 .kpi span{font-size:12px;color:var(--muted)}
 .filters{display:flex;gap:12px 16px;flex-wrap:wrap;align-items:flex-end}
 .field{display:grid;gap:4px;min-width:0}
 .field>label,.field>span{font-size:12px;color:var(--muted);font-weight:500}
-select,input[type=search]{font:inherit;font-size:13px;height:34px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 10px;min-width:160px;border-radius:0}
+select,input[type=search]{font:inherit;font-size:13px;height:34px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 10px;min-width:170px;border-radius:0}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{font:inherit;font-size:13px;height:34px;padding:0 12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .linkbtn{font:inherit;font-size:13px;background:none;border:0;color:var(--accent);cursor:pointer;height:34px;font-weight:600;padding:0}
 .reset{margin-inline-start:auto}
+.tokens{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.tokens:empty{display:none}
+.token{font:inherit;font-size:12px;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--fg);padding:2px 8px;cursor:pointer}
+.token b{font-weight:600}
+.findings ul{margin:8px 0 0;padding-inline-start:18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 32px}
+.findings li b{font-variant-numeric:tabular-nums}
+.scope{font-size:12px;color:var(--muted);margin-top:10px}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .bars{display:grid;gap:6px}
-.bar{display:grid;grid-template-columns:minmax(0,44%) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px}
+.bar{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px}
 .bar .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar .track{height:9px;background:var(--track)}
-.bar .fill{display:block;height:100%;background:var(--accent)}
+.bar .fill{display:block;height:100%;background:var(--data)}
 .bar .val{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;white-space:nowrap}
 .bar.clickable{cursor:pointer}.bar.clickable:hover .name{color:var(--accent)}
-.hist{display:flex;align-items:flex-end;gap:6px;height:150px;border-bottom:1px solid var(--line);padding-top:16px}
+.hist{display:flex;align-items:flex-end;gap:6px;height:140px;border-bottom:1px solid var(--line);padding-top:16px}
 .hcol{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%}
-.hcol i{display:block;width:100%;background:var(--accent);min-height:1px}
+.hcol i{display:block;width:100%;background:var(--data);min-height:1px}
+.hcol.part i{background:repeating-linear-gradient(45deg,var(--data),var(--data) 3px,var(--data2) 3px,var(--data2) 6px)}
 .hcol b{font-size:11px;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
 .hax{display:flex;gap:6px;margin-top:5px}
-.hax span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--muted)}
+.hax span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hnote{font-size:12px;color:var(--muted);margin-top:8px}
+.qs{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+.qs b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.mini{width:100%;border-collapse:collapse;font-size:13px}
+.mini th{font-size:12px;color:var(--muted);font-weight:500;text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
+.mini td{padding:6px 8px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
+.mini th.num,.mini td.num{text-align:left}
+.mini tr.clickable{cursor:pointer}.mini tr.clickable:hover{background:var(--accent-soft)}
 .tablecard{padding:0}
 .tablehead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .tablehead span{font-size:12px;color:var(--muted)}
-.scroll{overflow-x:auto;max-height:640px;overflow-y:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{position:sticky;top:0;z-index:1;background:var(--head);text-align:right;font-weight:600;font-size:12px;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-thead th button{all:unset;cursor:pointer}
-thead th[aria-sort="ascending"] button::after{content:" ↑"}thead th[aria-sort="descending"] button::after{content:" ↓"}
-tbody td{padding:7px 10px;border-bottom:1px solid var(--line2);white-space:nowrap;vertical-align:top}
-tbody tr.lot{cursor:pointer}
-tbody tr.lot:hover{background:var(--accent-soft)}
-tbody tr.lot[aria-expanded="true"]{background:var(--accent-soft)}
-td.num{font-variant-numeric:tabular-nums;text-align:left;direction:ltr}
-td.win{white-space:normal;min-width:200px;max-width:320px}
+.scroll{overflow:auto;max-height:640px}
+table.lots{width:100%;border-collapse:collapse;font-size:13px}
+.lots thead th{position:sticky;top:0;z-index:2;background:var(--head);text-align:right;font-weight:600;font-size:12px;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.lots thead th.num{text-align:left}
+.lots thead th button{all:unset;cursor:pointer}
+.lots thead th button:hover{color:var(--fg)}
+.lots thead th button::after{content:" ↕";opacity:.35}
+.lots thead th[aria-sort="ascending"] button::after{content:" ↑";opacity:1}
+.lots thead th[aria-sort="descending"] button::after{content:" ↓";opacity:1}
+.lots tbody td{padding:7px 10px;border-bottom:1px solid var(--line2);white-space:nowrap;vertical-align:top}
+.lots tbody tr.lot:hover td{background:var(--accent-soft)}
+.lots tbody tr.lot.open td{background:var(--accent-soft)}
+.lots td.num{font-variant-numeric:tabular-nums;text-align:left}
+.lots td.win{white-space:normal;min-width:190px;max-width:300px}
+.lots td.place small{display:block;font-size:11px;color:var(--muted)}
+.lots td:first-child{position:sticky;right:0;z-index:1;background:var(--card)}
+.expand{all:unset;cursor:pointer;color:var(--accent);font-weight:600;display:inline-flex;gap:4px;align-items:center}
+.expand::before{content:"◂";display:inline-block;transition:transform .15s}
+.expand[aria-expanded="true"]::before{transform:rotate(-90deg)}
 .tag{display:inline-block;font-size:11px;padding:0 6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-.tag.ind{border-color:#E7D3A3;color:var(--warn);background:var(--warn-soft)}
-.tag.top{border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)}
-tr.detail td{background:var(--head);padding:12px 16px 16px;white-space:normal}
-.ladder{display:grid;gap:4px;max-width:720px}
-.rung{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:12px}
-.rung .t{height:12px;background:var(--track);position:relative}
-.rung .t i{display:block;height:100%;background:#9DB0F5}
-.rung.w .t i{background:var(--up)}
-.rung .r{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--warn)}
-.rung span{font-variant-numeric:tabular-nums;color:var(--muted)}
-.rung.w span{color:var(--up);font-weight:600}
+.tag.ind{border-color:color-mix(in srgb,var(--warn) 40%,transparent);color:var(--warn);background:var(--warn-soft)}
+.tag.rank{border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft)}
+.pos{color:var(--up)}.neg{color:var(--down)}
+tr.detail td{background:var(--head);padding:14px 16px 16px;white-space:normal}
+.dmeta{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:10px}
+.dmeta b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 8px}
 .legend i{display:inline-block;width:10px;height:10px;margin-inline-end:5px;vertical-align:-1px}
-.dmeta{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:8px}
-.dmeta b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.legend i.l{width:0;height:12px;border-inline-start:2px dashed currentColor}
+.ladder{display:grid;gap:4px;max-width:820px;position:relative}
+.rung{display:grid;grid-template-columns:22px minmax(0,1fr) 190px;gap:10px;align-items:center;font-size:12px}
+.rung .t{height:12px;background:var(--track);position:relative}
+.rung .t i{display:block;height:100%;background:var(--data2)}
+.rung.w .t i{background:var(--up)}
+.rung .t .m{position:absolute;top:-3px;bottom:-3px;width:0;border-inline-start:2px dashed var(--warn)}
+.rung .t .a{position:absolute;top:-3px;bottom:-3px;width:0;border-inline-start:2px dashed var(--fg)}
+.rung>span{font-variant-numeric:tabular-nums;color:var(--muted)}
+.rung.w>span{color:var(--up);font-weight:600}
+.rung>span small{color:var(--muted);font-weight:400}
 a{color:var(--accent)}
-.empty{padding:20px 0;color:var(--muted);font-size:13px}
+.empty{padding:16px 0;color:var(--muted);font-size:13px}
 .method{font-size:12px;color:var(--muted);display:grid;gap:5px}
 .method h2{color:var(--fg);margin-bottom:4px}
-.method p{margin:0;max-width:110ch}
-.cta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--frame);color:var(--on-frame);border:0}
-.cta p{margin:0;font-size:14px}
-.cta small{display:block;color:var(--on-frame2);font-size:12px}
-.cta a{color:#fff;font-weight:600;white-space:nowrap}
-@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.grid3{grid-template-columns:minmax(0,1fr)}.reset{margin-inline-start:0}}
-@media (max-width:420px){select,input[type=search]{min-width:0;width:100%}.field{width:100%}.kpi strong{font-size:19px}}
+.method p{margin:0;max-width:115ch}
+.cta{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap;background:linear-gradient(90deg,var(--frame),var(--frame2));color:var(--on-frame);border:0}
+.cta h2{color:var(--on-frame);font-size:16px}
+.cta p{margin:4px 0 0;font-size:13px;color:var(--on-frame2);max-width:70ch}
+.cta a{color:#fff;font-weight:600;white-space:nowrap;border:1px solid #ffffff55;padding:8px 14px;text-decoration:none}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.kpi:nth-child(4){border-inline-start:0}.kpi:nth-child(n+4){border-top:1px solid var(--line2)}}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}.findings ul{grid-template-columns:minmax(0,1fr)}
+  .grid3{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:86%;overflow-x:auto;scroll-snap-type:x mandatory}
+  .grid3>.card{scroll-snap-align:start}}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(odd){border-inline-start:0}.kpi:nth-child(n+3){border-top:1px solid var(--line2)}
+  .pill.src{display:none}.reset{margin-inline-start:0}.scroll{max-height:none}}
+@media (max-width:420px){select,input[type=search]{min-width:0;width:100%}.field{width:100%}.kpi strong{font-size:19px}.rung{grid-template-columns:18px minmax(0,1fr) 120px}.rung>span small{display:none}}
 @media (prefers-reduced-motion:no-preference){.fill,.hcol i{transition:width .25s,height .25s}}
 </style>
 
 <header class="top"><div class="wrap">
-  <div class="brand"><div class="mark" aria-hidden="true">ר</div><div><h1>ניתוח מכרזי רמ״י</h1><small>רביד לירז · תחרות, מחירים וזוכים במכרזי קרקע</small></div></div>
-  <div class="pills"><span class="pill" id="p-range"></span><span class="pill" id="p-fetch"></span><span class="pill">מקור: רשות מקרקעי ישראל</span></div>
+  <div class="brand"><div class="mark" aria-hidden="true">ר</div><div><h1>ניתוח מכרזי רמ״י</h1><small>רביד לירז · מי זוכה בקרקע, וכמה הוא משלם</small></div></div>
+  <div class="pills"><span class="pill" id="p-range"></span><span class="pill src">מקור: רשות מקרקעי ישראל</span></div>
 </div></header>
 
 <div class="wrap"><main>
-  <section class="card findings" aria-labelledby="f-h">
-    <h2 id="f-h">ממצאים עיקריים</h2>
-    <ul id="findings"></ul>
-    <div class="scope" id="scope"></div>
-  </section>
-
   <section class="kpis" aria-label="מדדים">
     <div class="kpi"><label>מגרשים שנזכו</label><strong id="k-lots"></strong><span id="k-lots-s"></span></div>
-    <div class="kpi"><label>סך הזכיות</label><strong id="k-sum"></strong><span>לפני הוצאות פיתוח</span></div>
+    <div class="kpi"><label>סך הזכיות במדגם</label><strong id="k-sum"></strong><span id="k-sum-s"></span></div>
     <div class="kpi"><label>חציון זכייה למגרש</label><strong id="k-med"></strong><span id="k-med-s"></span></div>
-    <div class="kpi"><label>חציון מציעים למגרש</label><strong id="k-bid"></strong><span id="k-bid-s"></span></div>
-    <div class="kpi"><label>זכייה מול מחיר הסף</label><strong id="k-prem"></strong><span id="k-prem-s"></span></div>
+    <div class="kpi"><label>זכייה מול שומת הקרקע</label><strong id="k-app"></strong><span id="k-app-s"></span></div>
+    <div class="kpi"><label>חציון הצעות למגרש</label><strong id="k-bid"></strong><span id="k-bid-s"></span></div>
     <div class="kpi"><label>פער מההצעה השנייה</label><strong id="k-gap"></strong><span id="k-gap-s"></span></div>
   </section>
 
   <section class="card filters" aria-label="סינון">
     <div class="field"><span>קטגוריה</span><div class="chips" id="f-cat"></div></div>
     <div class="field"><span>סוג זוכה</span><div class="chips" id="f-kind"></div></div>
-    <div class="field"><label for="f-city">עיר</label><select id="f-city"></select></div>
+    <div class="field"><label for="f-place">יישוב או אזור</label><select id="f-place"></select></div>
     <div class="field"><label for="f-q">חיפוש זוכה או מכרז</label><input id="f-q" type="search" placeholder="לדוגמה: אלקטרה, 244/2023"></div>
     <button class="linkbtn reset" id="reset" type="button">ניקוי סינון</button>
+    <div class="tokens" id="tokens" aria-label="סינון פעיל"></div>
+  </section>
+
+  <section class="card findings" aria-labelledby="f-h">
+    <h2 id="f-h">מה רואים בנתונים</h2>
+    <ul id="findings"></ul>
+    <div class="scope" id="scope"></div>
   </section>
 
   <section class="grid3" aria-label="תחרות">
-    <div class="card"><h2>כמה מציעים על כל מגרש</h2><p class="sub">מספר המגרשים לפי מספר ההצעות שהוגשו</p><div class="hist" id="h-bidders"></div><div class="hax" id="h-bidders-ax"></div><div class="hnote" id="h-bidders-n"></div></div>
-    <div class="card"><h2>פי כמה ממחיר הסף</h2><p class="sub">סכום הזכייה חלקי מחיר הסף שפורסם למגרש</p><div class="hist" id="h-prem"></div><div class="hax" id="h-prem-ax"></div><div class="hnote" id="h-prem-n"></div></div>
-    <div class="card"><h2>כמה הזוכה שילם מעל ההצעה השנייה</h2><p class="sub">פער בין הצעת הזוכה להצעה הגבוהה הבאה מתחתיה</p><div class="hist" id="h-gap"></div><div class="hax" id="h-gap-ax"></div><div class="hnote" id="h-gap-n"></div></div>
+    <div class="card"><h2>כמה שילם הזוכה מול שומת הקרקע</h2><p class="sub">סכום הזכייה חלקי השומה שפורסמה למגרש</p><div class="hist" id="h-app"></div><div class="hax" id="h-app-ax"></div><div class="qs" id="q-app"></div></div>
+    <div class="card"><h2>כמה הזוכה הציע מעל ההצעה השנייה</h2><p class="sub">הפער בין הצעת הזוכה להצעה הבאה מתחתיה</p><div class="hist" id="h-gap"></div><div class="hax" id="h-gap-ax"></div><div class="qs" id="q-gap"></div></div>
+    <div class="card"><h2>כמה הצעות הוגשו על כל מגרש</h2><p class="sub">מספר המגרשים לפי מספר ההצעות</p><div class="hist" id="h-bidders"></div><div class="hax" id="h-bidders-ax"></div><div class="qs" id="q-bidders"></div></div>
+  </section>
+
+  <section class="grid2" aria-label="תחרות לפי עוצמה">
+    <div class="card"><h2>יותר מתחרים, מחיר גבוה יותר?</h2><p class="sub">חציונים לפי מספר ההצעות על המגרש. מוצגות רק קבוצות עם 10 מגרשים לפחות</p><table class="mini" id="t-band"></table></div>
+    <div class="card"><h2>מגרשים עם הצעה אחת בלבד</h2><p class="sub">זכייה ללא תחרות. לחיצה פותחת את המגרש בטבלה</p><table class="mini" id="t-single"></table></div>
   </section>
 
   <section class="grid2" aria-label="שוק">
     <div class="card"><h2>הזוכים הגדולים</h2><p class="sub">סך סכומי הזכייה. לחיצה מסננת לזוכה</p><div class="bars" id="b-winners"></div></div>
-    <div class="card"><h2>ערים לפי סך הזכיות</h2><p class="sub">לחיצה מסננת לעיר</p><div class="bars" id="b-cities"></div></div>
-    <div class="card"><h2>מחיר קרקע למ״ר לפי עיר</h2><p class="sub">חציון סכום הזכייה חלקי שטח המגרש. רק ערים עם 3 מגרשים לפחות</p><div class="bars" id="b-ppsqm"></div></div>
-    <div class="card"><h2>זכיות לאורך זמן</h2><p class="sub">מספר מגרשים שנזכו לפי רבעון של ועדת המכרזים</p><div class="hist" id="h-time"></div><div class="hax" id="h-time-ax"></div></div>
+    <div class="card"><h2>שחקנים חוזרים</h2><p class="sub">זוכים בשני מגרשים לפחות. לחיצה מסננת לזוכה</p><table class="mini" id="t-repeat"></table></div>
+    <div class="card"><h2>מחיר קרקע למ״ר לפי יישוב</h2><p class="sub">חציון סכום הזכייה חלקי שטח המגרש, לפני הוצאות פיתוח. יישובים עם 5 מגרשים לפחות</p><div class="bars" id="b-ppsqm"></div></div>
+    <div class="card"><h2>זכיות לאורך זמן</h2><p class="sub">מגרשים שנזכו לפי רבעון של ועדת המכרזים</p><div class="hist" id="h-time"></div><div class="hax" id="h-time-ax"></div><div class="hnote" id="h-time-n"></div></div>
   </section>
 
   <section class="card tablecard" aria-labelledby="t-h">
     <div class="tablehead"><h2 id="t-h">כל המגרשים</h2><span id="t-count"></span></div>
-    <div class="scroll"><table>
+    <div class="scroll"><table class="lots">
       <thead><tr id="t-head"></tr></thead>
       <tbody id="t-body"></tbody>
     </table></div>
   </section>
 
   <section class="card cta">
-    <div><p>רוצים את הניתוח הזה על עיר, שכונה או מכרז שמעניין אתכם?</p><small>רביד לירז · STRATEGY · VALUE · GROWTH</small></div>
-    <a href="https://ravidliraz.com/" target="_blank" rel="noopener">ravidliraz.com ←</a>
+    <div><h2>מתכננים להגיש הצעה במכרז רמ״י?</h2>
+    <p>אבדוק עבורכם מה שילמו הזוכים במגרשים דומים: כמה מעל השומה, בכמה עקפו את ההצעה השנייה, ומי התחרה. הכול מנתוני המכרזים הרשמיים.</p></div>
+    <a href="https://ravidliraz.com/" target="_blank" rel="noopener">לפנייה לרביד לירז ←</a>
   </section>
 
   <section class="card method" aria-labelledby="m-h">
     <h2 id="m-h">איך זה חושב</h2>
     <p id="m-scope"></p>
-    <p><b>מחיר הסף</b> הוא הערך שפורסם למגרש בנתוני המכרז. לא בדקנו כיצד נקבע, ויש מכרזים שבהם הוא נמוך מאוד ביחס לזכייה. לכן מוצג החציון ולא הממוצע.</p>
-    <p><b>ההצעה הזוכה</b> מסומנת במקור. ב־<span id="m-top"></span> מגרשים הייתה הצעה גבוהה ממנה שלא זכתה. הסיבה לא מופיעה בנתונים.</p>
-    <p><b>פער מההצעה השנייה</b> הוא סכום הזכייה חלקי ההצעה הגבוהה הבאה שמתחתיו. <b>מחיר קרקע למ״ר</b> הוא סכום הזכייה חלקי שטח המגרש, לפני הוצאות פיתוח.</p>
-    <p>הסכומים נומינליים, ללא מע״מ והצמדה. לא מוצגים זוכי הגרלות פרטיים, הודעות מערכת של רמ״י ("הצעות לא תקינות" וכדומה) ומגרשים ללא זוכה. יחידים שזכו ב־3 מיליון ₪ ומעלה מוצגים ומסומנים "פרטי". זוכה מסווג כחברה לפי שמו (בע״מ, שותפות, מילת ענף).</p>
+    <p><b>שומת הקרקע</b> היא שומת המגרש כפי שפורסמה בנתוני המכרז. <b>מחיר הסף</b> שפורסם נמוך ממנה בהרבה (בחציון <span id="m-res"></span> מהשומה), ולכן היחס לסף לא מוצג כמדד לתחרות; הוא מופיע בטבלה ובפירוט ההצעות.</p>
+    <p><b>פער מההצעה השנייה</b>: סכום הזכייה חלקי ההצעה הבאה מתחתיו. הצעה שווה לזוכה נותנת פער 0%. זה הפער בדיעבד, הסכום שהזוכה הציע מעבר לנדרש כדי לנצח.</p>
+    <p><b>ההצעה הזוכה</b> מסומנת במקור. ב־<span id="m-top"></span> מגרשים הייתה הצעה גבוהה ממנה שלא זכתה; במכרזים שבהם נקבע שמציע יזכה במגרש אחד בלבד, סביר שהמציע זכה במגרש אחר. הסיבה לא מופיעה בנתונים. מספר ההצעות סופר הצעות, לא מציעים ייחודיים; המקור לא מזהה את המציע.</p>
+    <p><b>מחיר קרקע למ״ר</b>: סכום הזכייה חלקי שטח המגרש, לפני הוצאות פיתוח. מגרשים מעל 50,000 מ״ר (מחצבות, שטחים אזוריים) לא נכללים.</p>
+    <p>הסכומים נומינליים, ללא מע״מ והצמדה. נכללים רק מגרשים עם סכום זכייה; מגרשי הגרלה (ללא מחיר) והודעות מערכת של רמ״י לא נכללים. זוכה מסווג כחברה לפי שמו (בע״מ, שותפות, מילת ענף); הסיווג אוטומטי ועלול לטעות. יישובים שחסרים בטבלת הקודים מוצגים בשם האזור מהמכרז.</p>
     <p>קטגוריית "תעשייה ומסחר" נשלפה בקודי ייעוד שהונחו כמלונאות, ובפועל החזירה מגרשים באזורי תעשייה ותעסוקה.</p>
   </section>
 </main></div>
@@ -186,135 +223,169 @@ const DATA = __DATA__;
 const M = DATA.meta, L = DATA.lots;
 const nf = new Intl.NumberFormat('he-IL',{maximumFractionDigits:0});
 const n1 = new Intl.NumberFormat('he-IL',{maximumFractionDigits:1});
-const money = n => n==null ? '—' : '₪'+nf.format(n);
-const short = n => n==null ? '—' : n>=1e9 ? '₪'+n1.format(n/1e9)+' מיליארד' : n>=1e6 ? '₪'+n1.format(n/1e6)+' מיליון' : n>=1e3 ? '₪'+nf.format(n/1e3)+' אלף' : '₪'+nf.format(n);
-const pct = n => n==null ? '—' : n1.format(n)+'%';
-const times = r => r==null ? '—' : '×'+n1.format(r);
+const money = n => n==null ? '—' : nf.format(n)+' ₪';
+const shortParts = n => n==null ? ['—',''] : n>=1e9 ? [n1.format(n/1e9),'מיליארד ₪'] : n>=1e6 ? [n1.format(n/1e6),'מיליון ₪'] : n>=1e3 ? [nf.format(n/1e3),'אלף ₪'] : [nf.format(n),'₪'];
+const short = n => shortParts(n).join(' ').trim();
+const kpiMoney = n => { const [v,u]=shortParts(n); return `${v}${u?` <small>${u}</small>`:''}`; };
+const sgn = n => n==null ? '—' : (n>0?'+':n<0?'−':'')+n1.format(Math.abs(n))+'%';
 const dmy = s => s ? s.split('-').reverse().join('.') : '—';
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $ = id => document.getElementById(id);
-const median = a => { if(!a.length) return null; const s=[...a].sort((x,y)=>x-y), m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+const q = (a,p) => { if(!a.length) return null; const s=[...a].sort((x,y)=>x-y), i=(s.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo); };
+const median = a => q(a,.5);
 const vals = (rows,k) => rows.map(r=>r[k]).filter(v=>v!=null);
+const ltr = s => `<bdi dir="ltr">${s}</bdi>`;
 
-$('p-range').textContent = `ועדות ${dmy(M.date_from)} – ${dmy(M.date_to)}`;
-$('p-fetch').textContent = `נשלף ${dmy(M.fetched)}`;
+$('p-range').textContent = `ועדות ${dmy(M.date_from)} – ${dmy(M.date_to)} · נשלף ${dmy(M.fetched)}`;
 
 const CATS = ['הכל', ...[...new Set(L.map(r=>r.cat))]];
-const KINDS = [['הכל','הכל'],['חברה','חברות'],['פרטי','יחידים 3M+']];
-const S = {cat:'הכל', kind:'הכל', city:'', q:'', sort:'win', dir:-1, open:null};
+const KINDS = [['הכל','הכל'],['חברה','חברות'],['פרטי','יחידים']];
+const S = {cat:'יזמות', kind:'הכל', place:'', q:'', sort:'win', dir:-1, open:null};
 
-function chips(el, items, key){
-  el.innerHTML = items.map(it=>{const [v,l]=Array.isArray(it)?it:[it,it];
-    return `<button type="button" class="chip" data-v="${esc(v)}" aria-pressed="${S[key]===v}">${esc(l)}</button>`;}).join('');
-  el.onclick = e => { const b=e.target.closest('button'); if(!b) return; S[key]=b.dataset.v; S.open=null; render(); };
+function buildChips(el, items, key){
+  el.innerHTML = items.map(it=>{const [v,l]=Array.isArray(it)?it:[it,it];return `<button type="button" class="chip" data-v="${esc(v)}">${esc(l)}</button>`;}).join('');
+  el.addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; S[key]=b.dataset.v; S.open=null; render(); });
 }
-const cities=[...new Set(L.map(r=>r.city).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'));
-$('f-city').innerHTML='<option value="">כל הערים</option>'+cities.map(c=>`<option>${esc(c)}</option>`).join('');
-$('f-city').onchange=e=>{S.city=e.target.value;S.open=null;render();};
+function syncChips(el,key){ el.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===S[key])); }
+buildChips($('f-cat'),CATS,'cat'); buildChips($('f-kind'),KINDS,'kind');
+const places=[...new Set(L.map(r=>r.place))].sort((a,b)=>a.localeCompare(b,'he'));
+$('f-place').innerHTML='<option value="">כל היישובים והאזורים</option>'+places.map(c=>`<option>${esc(c)}</option>`).join('');
+$('f-place').onchange=e=>{S.place=e.target.value;S.open=null;render();};
 $('f-q').oninput=e=>{S.q=e.target.value.trim();S.open=null;render();};
-$('reset').onclick=()=>{Object.assign(S,{cat:'הכל',kind:'הכל',city:'',q:'',open:null});$('f-city').value='';$('f-q').value='';render();};
+$('reset').onclick=()=>{Object.assign(S,{cat:'הכל',kind:'הכל',place:'',q:'',open:null});$('f-place').value='';$('f-q').value='';render();};
+$('tokens').onclick=e=>{const t=e.target.closest('.token');if(!t)return;const k=t.dataset.k;S[k]=(k==='cat'||k==='kind')?'הכל':'';if(k==='place')$('f-place').value='';if(k==='q')$('f-q').value='';S.open=null;render();};
 
-const rowsNow = () => L.filter(r=>(S.cat==='הכל'||r.cat===S.cat)&&(S.kind==='הכל'||r.kind===S.kind)&&(!S.city||r.city===S.city)&&(!S.q||r.winner.includes(S.q)||String(r.tender).includes(S.q)));
+const rowsNow = () => L.filter(r=>(S.cat==='הכל'||r.cat===S.cat)&&(S.kind==='הכל'||r.kind===S.kind)&&(!S.place||r.place===S.place)&&(!S.q||r.winner.includes(S.q)||String(r.tender).includes(S.q)));
 
 function group(rows, key, val){const m=new Map();rows.forEach(r=>{const k=key(r);if(k==null)return;m.set(k,(m.get(k)||0)+val(r));});return [...m].sort((a,b)=>b[1]-a[1]);}
+function activate(el, onPick){
+  el.onclick=e=>{const b=e.target.closest('[data-n]');if(b)onPick(b.dataset.n);};
+  el.onkeydown=e=>{if(e.key!=='Enter'&&e.key!==' ')return;const b=e.target.closest('[data-n]');if(b){e.preventDefault();onPick(b.dataset.n,true);}};
+}
 function bars(el, pairs, fmt, onPick){
   if(!pairs.length){el.innerHTML='<div class="empty">אין נתונים בסינון הזה.</div>';return;}
   const max=Math.max(...pairs.map(p=>p[1]));
   el.innerHTML=pairs.map(([n,v,extra])=>`<div class="bar${onPick?' clickable':''}" data-n="${esc(n)}" ${onPick?'role="button" tabindex="0"':''}><span class="name" title="${esc(n)}">${esc(n)}</span><span class="track"><span class="fill" style="width:${(v/max*100).toFixed(1)}%"></span></span><span class="val">${fmt(v)}${extra?` · ${extra}`:''}</span></div>`).join('');
-  if(onPick){ el.onclick=e=>{const b=e.target.closest('.bar');if(b)onPick(b.dataset.n);}; el.onkeydown=e=>{if(e.key==='Enter'){const b=e.target.closest('.bar');if(b)onPick(b.dataset.n);}}; }
+  if(onPick) activate(el,onPick);
 }
-function hist(id, buckets, values, nLabel){
+function hist(id, buckets, values){
   const counts=buckets.map(()=>0);
   values.forEach(v=>{const i=buckets.findIndex(b=>v>=b.lo&&v<b.hi);if(i>=0)counts[i]++;});
   const mx=Math.max(1,...counts);
-  $(id).innerHTML=buckets.map((b,i)=>`<div class="hcol" title="${esc(b.label)}: ${counts[i]} מגרשים"><b>${counts[i]||''}</b><i style="height:${(counts[i]/mx*100).toFixed(1)}%"></i></div>`).join('');
+  $(id).innerHTML=buckets.map((b,i)=>`<div class="hcol${b.part?' part':''}" role="img" aria-label="${esc(b.label)}: ${counts[i]} מגרשים"><b>${counts[i]||''}</b><i style="height:${(counts[i]/mx*100).toFixed(1)}%"></i></div>`).join('');
   $(id+'-ax').innerHTML=buckets.map(b=>`<span dir="${/[֐-׿]/.test(b.label)?'rtl':'ltr'}">${esc(b.label)}</span>`).join('');
-  if(nLabel) $(id+'-n').textContent=nLabel;
+}
+function quants(id, arr, fmt, extra){
+  if(!arr.length){$(id).innerHTML='<span>אין נתונים בסינון הזה.</span>';return;}
+  $(id).innerHTML=`<span>רבעון תחתון <b>${fmt(q(arr,.25))}</b></span><span>חציון <b>${fmt(q(arr,.5))}</b></span><span>רבעון עליון <b>${fmt(q(arr,.75))}</b></span><span>n=<b>${nf.format(arr.length)}</b></span>${extra||''}`;
 }
 
 const COLS=[
-  ['date','ועדה'],['tender','מכרז'],['city','עיר'],['winner','זוכה'],['win','זכייה'],
-  ['reserve','מחיר סף'],['premium_pct','מעל הסף'],['bidders','מציעים'],['gap_pct','פער מהשני'],['land_ppsqm','₪ למ״ר קרקע'],['area','שטח מ״ר'],['cat','קטגוריה']];
-$('t-head').innerHTML=COLS.map(([k,l])=>`<th data-k="${k}"><button type="button">${l}</button></th>`).join('');
-$('t-head').onclick=e=>{const th=e.target.closest('th');if(!th)return;const k=th.dataset.k;S.dir=S.sort===k?-S.dir:(['date','tender','city','winner','cat'].includes(k)?1:-1);S.sort=k;render();};
-$('t-body').onclick=e=>{const tr=e.target.closest('tr.lot');if(!tr||e.target.closest('a'))return;S.open=S.open===tr.dataset.id?null:tr.dataset.id;renderTable(rowsNow());};
-$('t-body').onkeydown=e=>{if(e.key!=='Enter')return;const tr=e.target.closest('tr.lot');if(tr){S.open=S.open===tr.dataset.id?null:tr.dataset.id;renderTable(rowsNow());}};
+  ['date','ועדה',0],['tender','מכרז',0],['place','יישוב',0],['winner','זוכה',0],['win','זכייה ₪',1],
+  ['vs_appraisal_pct','מול השומה',1],['bidders','הצעות',1],['gap_pct','מעל השנייה',1],['land_ppsqm','₪ למ״ר',1],['area','שטח מ״ר',1],['premium_pct','פי מהסף',1],['cat','קטגוריה',0]];
+$('t-head').innerHTML=COLS.map(([k,l,n])=>`<th data-k="${k}"${n?' class="num"':''} aria-sort="none"><button type="button">${l}</button></th>`).join('');
+$('t-head').onclick=e=>{const th=e.target.closest('th');if(!th)return;const k=th.dataset.k;S.dir=S.sort===k?-S.dir:(['date','tender','place','winner','cat'].includes(k)?1:-1);S.sort=k;renderTable(rowsNow(),'th[data-k="'+k+'"] button');};
+$('t-body').onclick=e=>{if(e.target.closest('a'))return;const tr=e.target.closest('tr.lot');if(!tr)return;toggle(tr.dataset.id);};
+function toggle(id){S.open=S.open===id?null:id;renderTable(rowsNow(),`tr.lot[data-id="${CSS.escape(id)}"] .expand`);}
 
 function ladder(r){
   const bids=r.bids||[]; if(!bids.length) return '<div class="empty">לא פורסמו הצעות למגרש הזה.</div>';
-  const mx=Math.max(...bids.map(b=>b.sum), r.reserve||0);
-  const rv=r.reserve?`<i class="r" style="right:${(r.reserve/mx*100).toFixed(2)}%" title="מחיר סף ${money(r.reserve)}"></i>`:'';
-  const shown=bids.slice(0,25);
-  return `<div class="dmeta"><span>מגרש <b>${esc(r.lot??'—')}</b></span><span>גוש/חלקה <b>${esc(r.gush??'—')}</b></span><span>הוצאות פיתוח <b>${money(r.dev)}</b></span>${r.units?`<span>יח״ד במכרז <b>${nf.format(r.units)}</b></span>`:''}<span><a href="${esc(r.url)}" target="_blank" rel="noopener">המכרז באתר רמ״י ↗</a></span></div>
-  <div class="legend"><span><i style="background:var(--up)"></i>הצעה זוכה</span><span><i style="background:#9DB0F5"></i>הצעה אחרת</span>${r.reserve?'<span><i style="background:var(--warn);width:3px"></i>מחיר סף</span>':''}</div>
-  <div class="ladder">${shown.map((b,i)=>`<div class="rung${b.win?' w':''}"><span>${i+1}</span><span class="t"><i style="width:${(b.sum/mx*100).toFixed(2)}%;margin-inline-start:auto"></i>${i===0?rv:''}</span><span>${money(b.sum)}</span></div>`).join('')}</div>
-  ${bids.length>shown.length?`<div class="hnote">מוצגות 25 ההצעות הגבוהות מתוך ${bids.length}.</div>`:''}`;
+  const mx=Math.max(...bids.map(b=>b.sum), r.appraisal||0, r.reserve||0);
+  const mark=(v,c,t)=>v?`<i class="${c}" style="right:${(v/mx*100).toFixed(2)}%" title="${t}"></i>`:'';
+  const shown=bids.slice(0,30);
+  return `<h3>כל ההצעות שהוגשו על המגרש, מהגבוהה לנמוכה</h3>
+  <div class="dmeta"><span>מגרש <b>${esc(r.lot??'—')}</b></span><span>גוש/חלקה <b>${esc(r.gush??'—')}</b></span><span>שומה <b>${money(r.appraisal)}</b></span><span>מחיר סף <b>${money(r.reserve)}</b></span><span>הוצאות פיתוח <b>${money(r.dev)}</b></span>${r.max_to_win?`<span>מגרשים למציע <b>${r.max_to_win}</b></span>`:''}<span><a href="${esc(r.url)}" target="_blank" rel="noopener">המכרז באתר רמ״י ↗</a></span></div>
+  <div class="legend"><span><i style="background:var(--up)"></i>הצעה זוכה</span><span><i style="background:var(--data2)"></i>הצעה אחרת</span>${r.appraisal?'<span style="color:var(--fg)"><i class="l"></i>שומה</span>':''}${r.reserve?'<span style="color:var(--warn)"><i class="l"></i>מחיר סף</span>':''}</div>
+  <div class="ladder">${shown.map((b,i)=>`<div class="rung${b.win?' w':''}"><span>${i+1}</span><span class="t"><i style="width:${(b.sum/mx*100).toFixed(2)}%"></i>${mark(r.appraisal,'a','שומה')}${mark(r.reserve,'m','מחיר סף')}</span><span>${money(b.sum)} ${b.win?'· זוכה':`<small>${r.win?sgn((b.sum/r.win-1)*100)+' מהזוכה':''}</small>`}</span></div>`).join('')}</div>
+  ${bids.length>shown.length?`<div class="hnote">מוצגות 30 ההצעות הגבוהות מתוך ${nf.format(bids.length)}.</div>`:''}`;
 }
-function renderTable(rows){
+function renderTable(rows, focusSel){
   const k=S.sort,d=S.dir;
   const sorted=[...rows].sort((a,b)=>{const x=a[k],y=b[k];if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return(typeof x==='number'?x-y:String(x).localeCompare(String(y),'he'))*d;});
   document.querySelectorAll('#t-head th').forEach(th=>th.setAttribute('aria-sort',th.dataset.k===k?(d>0?'ascending':'descending'):'none'));
-  $('t-count').textContent=`${nf.format(rows.length)} מגרשים · לחיצה על שורה מציגה את כל ההצעות`;
+  const label=COLS.find(c=>c[0]===k)?.[1]??'';
+  $('t-count').textContent=`${nf.format(rows.length)} מגרשים · ממוין לפי ${label} ${d>0?'↑':'↓'} · לחיצה על שורה מציגה את כל ההצעות`;
   $('t-body').innerHTML=sorted.length?sorted.map(r=>{
     const open=S.open===r.id;
-    return `<tr class="lot" data-id="${esc(r.id)}" tabindex="0" aria-expanded="${open}">
-      <td>${dmy(r.date)}</td><td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.tender)}</a></td><td>${esc(r.city??'—')}</td>
-      <td class="win">${esc(r.winner)} ${r.kind==='פרטי'?'<span class="tag ind">פרטי</span>':''}${r.top_not_winner?' <span class="tag top" title="הייתה הצעה גבוהה יותר שלא זכתה">לא הגבוהה</span>':''}</td>
-      <td class="num">${money(r.win)}</td><td class="num">${money(r.reserve)}</td><td class="num">${r.premium_pct==null?'—':times(1+r.premium_pct/100)}</td>
-      <td class="num">${r.bidders??'—'}</td><td class="num">${pct(r.gap_pct)}</td><td class="num">${r.land_ppsqm==null?'—':nf.format(r.land_ppsqm)}</td>
-      <td class="num">${r.area==null?'—':nf.format(r.area)}</td><td><span class="tag">${esc(r.cat)}</span></td></tr>
+    return `<tr class="lot${open?' open':''}" data-id="${esc(r.id)}">
+      <td><button type="button" class="expand" aria-expanded="${open}" aria-label="הצעות למגרש">${dmy(r.date)}</button></td>
+      <td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.tender)}</a></td>
+      <td class="place">${esc(r.place)}${r.hood&&r.hood!==r.place?`<small>${esc(r.hood)}</small>`:''}</td>
+      <td class="win">${esc(r.winner)} ${r.kind==='פרטי'?'<span class="tag ind">פרטי</span>':''}${r.win_rank>1?` <span class="tag rank" title="הייתה הצעה גבוהה יותר שלא זכתה">הצעה ${r.win_rank} בגובהה</span>`:''}</td>
+      <td class="num">${nf.format(r.win)}</td>
+      <td class="num ${r.vs_appraisal_pct>0?'pos':r.vs_appraisal_pct<0?'neg':''}">${sgn(r.vs_appraisal_pct)}</td>
+      <td class="num">${r.bidders??'—'}</td><td class="num">${r.gap_pct==null?'—':n1.format(r.gap_pct)+'%'}</td>
+      <td class="num">${r.land_ppsqm==null?'—':nf.format(r.land_ppsqm)}</td><td class="num">${r.area==null?'—':nf.format(r.area)}</td>
+      <td class="num">${r.premium_pct==null?'—':'×'+n1.format(1+r.premium_pct/100)}</td><td><span class="tag">${esc(r.cat)}</span></td></tr>
       ${open?`<tr class="detail"><td colspan="${COLS.length}">${ladder(r)}</td></tr>`:''}`;}).join('')
     :`<tr><td colspan="${COLS.length}" class="empty">אין מגרשים בסינון הזה. נסו לנקות את הסינון.</td></tr>`;
+  if(focusSel){ const el=document.querySelector(focusSel); if(el) el.focus(); }
 }
 
 function render(){
-  chips($('f-cat'),CATS,'cat'); chips($('f-kind'),KINDS,'kind');
+  syncChips($('f-cat'),'cat'); syncChips($('f-kind'),'kind');
+  const tok=[S.cat!=='הכל'&&['cat','קטגוריה',S.cat],S.kind!=='הכל'&&['kind','סוג זוכה',S.kind==='חברה'?'חברות':'יחידים'],S.place&&['place','יישוב',S.place],S.q&&['q','חיפוש',S.q]].filter(Boolean);
+  $('tokens').innerHTML=tok.map(([k,l,v])=>`<button type="button" class="token" data-k="${k}" aria-label="הסרת סינון ${esc(l)}">${esc(l)}: <b>${esc(v)}</b> ✕</button>`).join('');
+
   const rows=rowsNow();
-  const wins=vals(rows,'win'), bidders=vals(rows,'bidders'), prem=vals(rows,'premium_pct'), gap=vals(rows,'gap_pct');
-  const withBids=rows.filter(r=>r.bids&&r.bids.length), topNot=withBids.filter(r=>r.top_not_winner).length;
-  const single=bidders.filter(b=>b===1).length;
-  const sum=wins.reduce((s,v)=>s+v,0), tenders=new Set(rows.map(r=>r.tender)).size, cityN=new Set(rows.map(r=>r.city).filter(Boolean)).size;
-  const mPrem=median(prem), mGap=median(gap), mBid=median(bidders);
+  const wins=vals(rows,'win'), app=vals(rows,'vs_appraisal_pct'), gap=vals(rows,'gap_pct'), bidders=vals(rows,'bidders');
+  const single=rows.filter(r=>r.bidders===1), notTop=rows.filter(r=>r.win_rank>1);
+  const sum=wins.reduce((s,v)=>s+v,0), tenders=new Set(rows.map(r=>r.tender)).size, placeN=new Set(rows.map(r=>r.place)).size;
+  const mApp=median(app), mGap=median(gap), mBid=median(bidders), above=app.filter(v=>v>0).length;
 
-  $('k-lots').textContent=nf.format(rows.length); $('k-lots-s').textContent=`${nf.format(tenders)} מכרזים · ${nf.format(cityN)} ערים`;
-  $('k-sum').textContent=short(sum);
-  $('k-med').textContent=short(median(wins)); $('k-med-s').textContent=`n=${nf.format(wins.length)}`;
-  $('k-bid').textContent=mBid==null?'—':n1.format(mBid); $('k-bid-s').textContent=bidders.length?`${nf.format(single)} מגרשים עם מציע יחיד`:'אין נתוני הצעות';
-  $('k-prem').textContent=mPrem==null?'—':times(1+mPrem/100); $('k-prem-s').textContent=`חציון · n=${nf.format(prem.length)}`;
-  $('k-gap').textContent=pct(mGap); $('k-gap-s').textContent=`חציון · n=${nf.format(gap.length)}`;
+  $('k-lots').textContent=nf.format(rows.length); $('k-lots-s').textContent=`${nf.format(tenders)} מכרזים · ${nf.format(placeN)} יישובים ואזורים`;
+  $('k-sum').innerHTML=kpiMoney(sum); $('k-sum-s').textContent=`${nf.format(M.tenders_fetched)} מתוך ${nf.format(M.tenders_in_range)} מכרזים בטווח`;
+  $('k-med').innerHTML=kpiMoney(median(wins)); $('k-med-s').textContent=`n=${nf.format(wins.length)}`;
+  $('k-app').innerHTML=mApp==null?'—':ltr(sgn(mApp)); $('k-app-s').textContent=app.length?`חציון · ${nf.format(above)} מתוך ${nf.format(app.length)} מעל השומה`:'';
+  $('k-bid').textContent=mBid==null?'—':n1.format(mBid); $('k-bid-s').textContent=bidders.length?`${nf.format(single.length)} מגרשים עם הצעה אחת`:'';
+  $('k-gap').innerHTML=mGap==null?'—':ltr(n1.format(mGap)+'%'); $('k-gap-s').textContent=gap.length?`חציון · n=${nf.format(gap.length)}`:'';
 
-  const top=group(rows,r=>r.winner,r=>r.win||0)[0];
+  const top=group(rows,r=>r.winner,r=>r.win)[0];
   const f=[];
   if(rows.length){
-    f.push(`<b>${nf.format(rows.length)}</b> מגרשים שנזכו ב־${nf.format(tenders)} מכרזים, בסך <b>${short(sum)}</b>.`);
-    if(mBid!=null) f.push(`בחציון התחרו <b>${n1.format(mBid)}</b> מציעים על כל מגרש. ב־${nf.format(single)} מגרשים היה מציע יחיד.`);
-    if(mPrem!=null) f.push(`בחציון, מגרש נמכר <b>פי ${n1.format(1+mPrem/100)}</b> ממחיר הסף שפורסם (n=${nf.format(prem.length)}).`);
-    if(mGap!=null) f.push(`הזוכה שילם בחציון <b>${pct(mGap)}</b> יותר מההצעה הגבוהה הבאה. זה הסכום שהיה אפשר לחסוך במכרז סגור.`);
-    if(withBids.length) f.push(`ב־<b>${nf.format(topNot)}</b> מתוך ${nf.format(withBids.length)} מגרשים ההצעה הגבוהה ביותר לא זכתה.`);
+    if(mApp!=null) f.push(`הזוכים שילמו בחציון <b>${ltr(sgn(mApp))}</b> מול שומת הקרקע. מחצית מהזכיות נעו בין ${ltr(sgn(q(app,.25)))} ל־${ltr(sgn(q(app,.75)))}.`);
+    if(mGap!=null) f.push(`הזוכה הציע בחציון <b>${n1.format(mGap)}%</b> מעל ההצעה הבאה. ברבע מהמגרשים הפער עלה על ${n1.format(q(gap,.75))}%.`);
+    if(mBid!=null) f.push(`בחציון הוגשו <b>${n1.format(mBid)}</b> הצעות על כל מגרש. ב־${nf.format(single.length)} מגרשים הוגשה הצעה אחת בלבד.`);
+    if(notTop.length) f.push(`ב־<b>${nf.format(notTop.length)}</b> מגרשים הייתה הצעה גבוהה מהזוכה; ברובם מציע מוגבל למגרש אחד.`);
     if(top) f.push(`הזוכה הגדול: <b>${esc(top[0])}</b>, ${short(top[1])}.`);
   }
   $('findings').innerHTML=f.length?f.map(x=>`<li>${x}</li>`).join(''):'<li>אין מגרשים בסינון הזה.</li>';
-  const filt=[S.cat!=='הכל'&&S.cat,S.kind!=='הכל'&&(S.kind==='חברה'?'חברות':'יחידים'),S.city,S.q&&`"${S.q}"`].filter(Boolean);
-  $('scope').textContent=`${filt.length?'בסינון: '+filt.join(' · ')+'. ':''}מבוסס על ${nf.format(M.tenders_fetched)} מכרזים שנשלפו במלואם מתוך ${nf.format(M.tenders_in_range)} מכרזים עם תוצאות בטווח.`;
-  $('m-scope').textContent=`הנתונים: ${nf.format(M.tenders_fetched)} מכרזים עם תוצאות מתוך ${nf.format(M.tenders_in_range)} בטווח ${dmy(M.date_from)}–${dmy(M.date_to)}, כפי שנשלפו מ־API רמ״י ב־${dmy(M.fetched)}. מוצגים ${nf.format(L.length)} מגרשים; הוסרו ${nf.format(M.dropped.lottery)} זוכי הגרלה פרטיים, ${nf.format(M.dropped.system)} הודעות מערכת ו־${nf.format(M.dropped.no_winner)} מגרשים ללא זוכה.`;
-  $('m-top').textContent=nf.format(L.filter(r=>r.top_not_winner).length);
+  $('scope').textContent=`במדגם ${nf.format(M.tenders_fetched)} מכרזים שנשלפו במלואם מתוך ${nf.format(M.tenders_in_range)} מכרזים עם תוצאות בטווח. אלה לא סכומי השוק כולו.`;
+  $('m-scope').textContent=`הנתונים: ${nf.format(L.length)} מגרשים עם סכום זכייה, מ־${nf.format(M.tenders_fetched)} מכרזים מתוך ${nf.format(M.tenders_in_range)} מכרזים עם תוצאות שוועדתם התכנסה בין ${dmy(M.date_from)} ל־${dmy(M.date_to)}, כפי שנשלפו מ־API רמ״י ב־${dmy(M.fetched)}. לא נכללו ${nf.format(M.dropped.unpriced)} מגרשים ללא סכום זכייה (בעיקר הגרלות), ${nf.format(M.dropped.system)} הודעות מערכת ו־${nf.format(M.dropped.no_winner)} מגרשים ללא זוכה.`;
+  $('m-top').textContent=nf.format(L.filter(r=>r.win_rank>1).length);
+  $('m-res').textContent=n1.format(median(vals(L,'reserve_of_appraisal_pct')))+'%';
 
-  hist('h-bidders',[{lo:1,hi:2,label:'1'},{lo:2,hi:4,label:'2–3'},{lo:4,hi:7,label:'4–6'},{lo:7,hi:11,label:'7–10'},{lo:11,hi:21,label:'11–20'},{lo:21,hi:51,label:'21–50'},{lo:51,hi:1e9,label:'51+'}],bidders,`n=${nf.format(bidders.length)} מגרשים עם נתוני הצעות`);
-  hist('h-prem',[{lo:-1e9,hi:10,label:'עד 10%'},{lo:10,hi:50,label:'10–50%'},{lo:50,hi:100,label:'×1.5–2'},{lo:100,hi:300,label:'×2–4'},{lo:300,hi:900,label:'×4–10'},{lo:900,hi:1e9,label:'מעל ×10'}],prem,`n=${nf.format(prem.length)} מגרשים עם מחיר סף`);
-  hist('h-gap',[{lo:0,hi:2,label:'עד 2%'},{lo:2,hi:5,label:'2–5%'},{lo:5,hi:10,label:'5–10%'},{lo:10,hi:25,label:'10–25%'},{lo:25,hi:50,label:'25–50%'},{lo:50,hi:1e9,label:'50%+'}],gap,`n=${nf.format(gap.length)} מגרשים עם 2 הצעות לפחות`);
+  hist('h-app',[{lo:-1e9,hi:-30,label:'< −30%'},{lo:-30,hi:-10,label:'−30…−10%'},{lo:-10,hi:0,label:'−10…0%'},{lo:0,hi:10,label:'0…+10%'},{lo:10,hi:30,label:'+10…+30%'},{lo:30,hi:60,label:'+30…+60%'},{lo:60,hi:1e9,label:'> +60%'}],app);
+  quants('q-app',app,v=>ltr(sgn(v)));
+  hist('h-gap',[{lo:-1e-9,hi:1e-9,label:'0%'},{lo:1e-9,hi:2,label:'0…2%'},{lo:2,hi:5,label:'2…5%'},{lo:5,hi:10,label:'5…10%'},{lo:10,hi:25,label:'10…25%'},{lo:25,hi:50,label:'25…50%'},{lo:50,hi:1e9,label:'> 50%'}],gap);
+  quants('q-gap',gap,v=>n1.format(v)+'%');
+  hist('h-bidders',[{lo:1,hi:2,label:'1'},{lo:2,hi:4,label:'2–3'},{lo:4,hi:11,label:'4–10'},{lo:11,hi:21,label:'11–20'},{lo:21,hi:51,label:'21–50'},{lo:51,hi:151,label:'51–150'},{lo:151,hi:1e9,label:'151+'}],bidders);
+  quants('q-bidders',bidders,v=>n1.format(v));
 
-  const pickWinner=n=>{S.q=n;$('f-q').value=n;S.open=null;render();};
-  const pickCity=n=>{S.city=n;$('f-city').value=n;S.open=null;render();};
-  bars($('b-winners'),group(rows,r=>r.winner,r=>r.win||0).slice(0,10),short,pickWinner);
-  bars($('b-cities'),group(rows,r=>r.city,r=>r.win||0).slice(0,10),short,pickCity);
-  const byCity=new Map(); rows.forEach(r=>{if(r.city&&r.land_ppsqm!=null){(byCity.get(r.city)||byCity.set(r.city,[]).get(r.city)).push(r.land_ppsqm);}});
-  const pp=[...byCity].filter(([,v])=>v.length>=3).map(([c,v])=>[c,median(v),`n=${v.length}`]).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  bars($('b-ppsqm'),pp,v=>'₪'+nf.format(v),pickCity);
+  const bands=[['1',1,1],['2–3',2,3],['4–10',4,10],['11–20',11,20],['21–50',21,50],['51+',51,1e9]].map(([l,lo,hi])=>{const g=rows.filter(r=>r.bidders>=lo&&r.bidders<=hi);return [l,g];}).filter(([,g])=>g.length>=10);
+  $('t-band').innerHTML=bands.length?`<thead><tr><th>הצעות</th><th class="num">מגרשים</th><th class="num">זכייה מול שומה</th><th class="num">מעל השנייה</th><th class="num">חציון זכייה</th></tr></thead><tbody>${bands.map(([l,g])=>`<tr><td dir="ltr" style="text-align:right">${l}</td><td class="num">${g.length}</td><td class="num">${ltr(sgn(median(vals(g,'vs_appraisal_pct'))))}</td><td class="num">${(()=>{const v=median(vals(g,'gap_pct'));return v==null?'—':n1.format(v)+'%';})()}</td><td class="num">${short(median(vals(g,'win')))}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">אין מספיק מגרשים בסינון הזה.</td></tr></tbody>';
+
+  const sg=[...single].sort((a,b)=>b.win-a.win).slice(0,8);
+  $('t-single').innerHTML=sg.length?`<thead><tr><th>יישוב</th><th>זוכה</th><th class="num">זכייה</th><th class="num">מול שומה</th></tr></thead><tbody>${sg.map(r=>`<tr class="clickable" data-n="${esc(r.id)}" tabindex="0"><td>${esc(r.place)}</td><td>${esc(r.winner)}</td><td class="num">${short(r.win)}</td><td class="num">${ltr(sgn(r.vs_appraisal_pct))}</td></tr>`).join('')}</tbody>${single.length>8?`<caption style="caption-side:bottom;text-align:right;font-size:12px;color:var(--muted);padding-top:6px">ועוד ${single.length-8} מגרשים בטבלה למטה</caption>`:''}`:'<tbody><tr><td class="empty">אין מגרשים עם הצעה אחת בסינון הזה.</td></tr></tbody>';
+  activate($('t-single'),(id,kb)=>{S.open=id;S.sort='bidders';S.dir=1;renderTable(rowsNow());const el=document.querySelector(`tr.lot[data-id="${CSS.escape(id)}"]`);if(el){el.scrollIntoView({block:'center'});el.querySelector('.expand').focus();}});
+
+  const pickWinner=(n,kb)=>{S.q=n;$('f-q').value=n;S.open=null;render();if(kb)$('f-q').focus();};
+  const pickPlace=(n,kb)=>{S.place=n;$('f-place').value=n;S.open=null;render();if(kb)$('f-place').focus();};
+  bars($('b-winners'),group(rows,r=>r.winner,r=>r.win).slice(0,10),short,pickWinner);
+  const rep=new Map(); rows.forEach(r=>{(rep.get(r.winner)||rep.set(r.winner,[]).get(r.winner)).push(r);});
+  const repeat=[...rep].filter(([,g])=>g.length>=2).sort((a,b)=>b[1].length-a[1].length||b[1].reduce((s,r)=>s+r.win,0)-a[1].reduce((s,r)=>s+r.win,0)).slice(0,10);
+  $('t-repeat').innerHTML=repeat.length?`<thead><tr><th>זוכה</th><th class="num">מגרשים</th><th class="num">סך זכייה</th><th class="num">מול שומה</th></tr></thead><tbody>${repeat.map(([w,g])=>`<tr class="clickable" data-n="${esc(w)}" tabindex="0"><td>${esc(w)}<br><small style="color:var(--muted)">${esc([...new Set(g.map(r=>r.place))].slice(0,3).join(' · '))}</small></td><td class="num">${g.length}</td><td class="num">${short(g.reduce((s,r)=>s+r.win,0))}</td><td class="num">${ltr(sgn(median(vals(g,'vs_appraisal_pct'))))}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">אין זוכים חוזרים בסינון הזה.</td></tr></tbody>';
+  activate($('t-repeat'),pickWinner);
+  const byP=new Map(); rows.forEach(r=>{if(r.land_ppsqm!=null){(byP.get(r.place)||byP.set(r.place,[]).get(r.place)).push(r.land_ppsqm);}});
+  const pp=[...byP].filter(([,v])=>v.length>=5).map(([c,v])=>[c,median(v),`n=${v.length}`]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  bars($('b-ppsqm'),pp,v=>nf.format(v)+' ₪',pickPlace);
 
   const qs=[];const [fy,fm]=M.date_from.split('-').map(Number),[ty,tm]=M.date_to.split('-').map(Number);
-  for(let y=fy,q=Math.ceil(fm/3);y<ty||(y===ty&&q<=Math.ceil(tm/3));q===4?(y++,q=1):q++)qs.push([y,q]);
-  const tb=qs.map(([y,q])=>({label:`${String(y).slice(2)}′Q${q}`,lo:y*10+q,hi:y*10+q+1}));
+  for(let y=fy,qq=Math.ceil(fm/3);y<ty||(y===ty&&qq<=Math.ceil(tm/3));qq===4?(y++,qq=1):qq++)qs.push([y,qq]);
+  const firstPart=(fm-1)%3!==0, lastPart=!(tm%3===0&&ty&&new Date(ty,tm,0).getDate()===Number(M.date_to.slice(8)));
+  const tb=qs.map(([y,qq],i)=>({label:`Q${qq} ${y}`,lo:y*10+qq,hi:y*10+qq+1,part:(i===0&&firstPart)||(i===qs.length-1&&lastPart)}));
   hist('h-time',tb,rows.filter(r=>r.date).map(r=>{const [y,m]=r.date.split('-').map(Number);return y*10+Math.ceil(m/3);}));
+  $('h-time-n').textContent=`מפוספס: רבעון חלקי (הנתונים עד ${dmy(M.date_to)}). n=${nf.format(rows.filter(r=>r.date).length)}`;
 
   renderTable(rows);
 }
