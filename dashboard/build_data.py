@@ -27,6 +27,10 @@ Derived metrics, each computed only when its inputs exist in the source:
   land_ppsqm         winning bid / lot area (Shetach), land only; left empty
                      for lots over 50,000 sqm (quarries, regional plots)
 
+Category: tenders fetched as residential (יזמות) that carry a non-residential
+land use (KodYeudMichraz other than 1 or 2) and no housing units, such as
+offices or a quarry, are moved to "תעשייה ומסחר".
+
 Lots are kept when the source gives a positive winning amount. Lots without one
 are housing-lottery allocations (no price, no bids) or have no winner.
   dev_share_pct      development costs / (winning bid + development costs)
@@ -103,6 +107,9 @@ def build(raw, cities):
         for entry in body["tenders"]:
             b, det = entry["basic"], entry["details"]
             hood = (b.get("Shchuna") or "").strip() or None
+            cat = CATEGORY_HE.get(key, key)
+            if key == "yazamot" and b.get("KodYeudMichraz") not in (1, 2) and not pos(b.get("YechidotDiur")):
+                cat = CATEGORY_HE["malonaut"]
             place, mapped = place_name(b.get("KodYeshuv"), hood, cities)
             for tik in det.get("Tik") or []:
                 winner = (tik.get("ShemZoche") or "").strip()
@@ -136,7 +143,7 @@ def build(raw, cities):
                     "place": place,
                     "place_is_city": mapped,
                     "hood": hood,
-                    "cat": CATEGORY_HE.get(key, key),
+                    "cat": cat,
                     "lot": (tik.get("MitchamName") or "").strip() or None,
                     "winner": winner,
                     "kind": "חברה" if is_company(winner) else "פרטי",

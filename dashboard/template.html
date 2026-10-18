@@ -147,7 +147,7 @@ a{color:var(--accent)}
   .grid3>.card{scroll-snap-align:start}}
 @media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(odd){border-inline-start:0}.kpi:nth-child(n+3){border-top:1px solid var(--line2)}
   .pill.src{display:none}.reset{margin-inline-start:0}.scroll{max-height:75vh}}
-@media (max-width:420px){.mini th{white-space:normal}.mini th,.mini td{padding-inline:5px}.mini td:first-child{white-space:nowrap}select,input[type=search]{min-width:0;width:100%}.field{width:100%}.kpi strong{font-size:19px}.rung{grid-template-columns:18px minmax(0,1fr) 120px}.rung>span small{display:none}}
+@media (max-width:420px){.mini th{white-space:normal}.mini th,.mini td{padding-inline:5px}#t-band td:first-child,#t-single td:first-child{white-space:nowrap}#t-repeat td:first-child{white-space:normal;overflow-wrap:anywhere}select,input[type=search]{min-width:0;width:100%}.field{width:100%}.kpi strong{font-size:19px}.rung{grid-template-columns:18px minmax(0,1fr) 120px}.rung>span small{display:none}}
 @media (prefers-reduced-motion:no-preference){.fill,.hcol i{transition:width .25s,height .25s}}
 </style>
 
@@ -225,7 +225,7 @@ a{color:var(--accent)}
     <p><b>ברירת המחדל</b> מציגה מגרשי יזמות שזכו בהם חברות וקבוצות רכישה, כי זה הקהל שהניתוח מיועד לו. יחידים, בעיקר במכרזי מגרשים לבנייה עצמית, זמינים בלחיצה.</p>
     <p><b>מחיר קרקע למ״ר</b>: סכום הזכייה חלקי שטח המגרש, לפני הוצאות פיתוח. מגרשים מעל 50,000 מ״ר (מחצבות, שטחים אזוריים) לא נכללים.</p>
     <p>הסכומים נומינליים, ללא הצמדה, כפי שפורסמו. נכללים רק מגרשים עם סכום זכייה; מגרשי הגרלה (ללא מחיר) והודעות מערכת של רמ״י לא נכללים. זוכה מסווג כחברה לפי שמו (בע״מ, שותפות, מילת ענף); הסיווג אוטומטי ועלול לטעות. יישובים שחסרים בטבלת הקודים מוצגים בשם האזור מהמכרז.</p>
-    <p>קטגוריית "תעשייה ומסחר" נשלפה בקודי ייעוד שהונחו כמלונאות, ובפועל החזירה מגרשים באזורי תעשייה ותעסוקה.</p>
+    <p>קטגוריית "תעשייה ומסחר" נשלפה בקודי ייעוד שהונחו כמלונאות, ובפועל החזירה מגרשים באזורי תעשייה ותעסוקה. אליה צורפו גם מגרשים ממכרזי יזמות שייעודם אינו מגורים ואין בהם יחידות דיור (משרדים, מחצבה). יישוב לא מזוהה אינו מוצג בגרף המחיר למ״ר.</p>
   </section>
 </main></div>
 
@@ -396,7 +396,7 @@ function render(){
     $('h-curve-n').textContent=`${nf.format(cv.reduce((s,c)=>s+c.n,0))} הצעות על ${nf.format(rows.filter(r=>r.appraisal).length)} מגרשים. אחוז זכייה של הצעות בטווח, לא הסתברות למגרש מסוים.`;
   } else { $('h-curve').innerHTML='<div class="empty">אין מספיק הצעות בסינון הזה.</div>'; $('h-curve-ax').innerHTML=''; $('h-curve-n').textContent=''; }
   const bLo=bands[0], bHi=bands[bands.length-1];
-  $('cta-band').innerHTML=bands.length>=2?`<span>${ltr(bLo[0])} הצעות: ${ltr(sgn(median(vals(bLo[1],'vs_appraisal_pct'))))} מול השומה. ${ltr(bHi[0])} הצעות: ${ltr(sgn(median(vals(bHi[1],'vs_appraisal_pct'))))}. כמה מתחרים צפויים על המגרש שלכם?</span><a href="https://ravidliraz.com/" target="_blank" rel="noopener">בדיקה למכרז שלכם ←</a>`:'';
+  $('cta-band').innerHTML=bands.length>=2?`<span>${ltr(bLo[0])} הצעות (${bLo[1].length} מגרשים): ${ltr(sgn(median(vals(bLo[1],'vs_appraisal_pct'))))} מול השומה. ${ltr(bHi[0])} הצעות (${bHi[1].length} מגרשים): ${ltr(sgn(median(vals(bHi[1],'vs_appraisal_pct'))))}. כמה מתחרים צפויים על המגרש שלכם?</span><a href="https://ravidliraz.com/" target="_blank" rel="noopener">בדיקה למכרז שלכם ←</a>`:'';
   const sg=[...single].sort((a,b)=>b.win-a.win).slice(0,8);
   $('t-single').innerHTML=sg.length?`<thead><tr><th>יישוב</th><th>זוכה</th><th class="num">זכייה</th><th class="num">מול שומה</th></tr></thead><tbody>${sg.map(r=>`<tr class="clickable" data-n="${esc(r.id)}" tabindex="0"><td>${esc(r.place)}</td><td>${esc(r.winner)}</td><td class="num">${short(r.win)}</td><td class="num">${ltr(sgn(r.vs_appraisal_pct))}</td></tr>`).join('')}</tbody>${single.length>8?`<caption style="caption-side:bottom;text-align:right;font-size:12px;color:var(--muted);padding-top:6px">ועוד ${single.length-8} מגרשים בטבלה למטה</caption>`:''}`:'<tbody><tr><td class="empty">אין מגרשים עם הצעה אחת בסינון הזה.</td></tr></tbody>';
   activate($('t-single'),(id,kb)=>{S.open=id;S.sort='bidders';S.dir=1;renderTable(rowsNow());const el=document.querySelector(`tr.lot[data-id="${CSS.escape(id)}"]`);if(el){el.scrollIntoView({block:'center'});el.querySelector('.expand').focus();}});
@@ -408,7 +408,7 @@ function render(){
   const repeat=[...rep].filter(([,g])=>g.length>=2).sort((a,b)=>b[1].length-a[1].length||b[1].reduce((s,r)=>s+r.win,0)-a[1].reduce((s,r)=>s+r.win,0)).slice(0,10);
   $('t-repeat').innerHTML=repeat.length?`<thead><tr><th>זוכה</th><th class="num">מגרשים</th><th class="num">סך זכייה</th><th class="num">מול שומה</th></tr></thead><tbody>${repeat.map(([w,g])=>`<tr class="clickable" data-n="${esc(w)}" tabindex="0"><td>${esc(w)}<br><small style="color:var(--muted)">${esc([...new Set(g.map(r=>r.place))].slice(0,3).join(' · '))}</small></td><td class="num">${g.length}</td><td class="num">${short(g.reduce((s,r)=>s+r.win,0))}</td><td class="num">${ltr(sgn(median(vals(g,'vs_appraisal_pct'))))}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">אין זוכים חוזרים בסינון הזה.</td></tr></tbody>';
   activate($('t-repeat'),pickWinner);
-  const byP=new Map(); rows.forEach(r=>{if(r.land_ppsqm!=null){(byP.get(r.place)||byP.set(r.place,[]).get(r.place)).push(r.land_ppsqm);}});
+  const byP=new Map(); rows.forEach(r=>{if(r.land_ppsqm!=null&&r.place!=='יישוב לא מזוהה'){(byP.get(r.place)||byP.set(r.place,[]).get(r.place)).push(r.land_ppsqm);}});
   const pp=[...byP].filter(([,v])=>v.length>=5).map(([c,v])=>[c,median(v),`n=${v.length}`]).sort((a,b)=>b[1]-a[1]).slice(0,10);
   bars($('b-ppsqm'),pp,v=>nf.format(v)+' ₪',pickPlace);
 
