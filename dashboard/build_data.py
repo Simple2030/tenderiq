@@ -56,7 +56,7 @@ STATUS_MARKERS = ("הצעות לא תקינות", "אין הצעות", "המצי
 
 _QUOTES = re.compile(r"['\"״׳`’‘“”]+")
 _LTD = re.compile(r'בע\s*"?\s*[מם]\b')
-_ORG = re.compile(r'\b(חברה|שותפות|אגודה|עמותה|קיבוץ|מושב|קבוצת|רשת)\b')
+_ORG = re.compile(r'\b(חברה|שותפות|אגודה|עמותה|קיבוץ|מושב|קבוצת|רשת)\b|רשימת מציעים')
 _BIZ = re.compile(
     r'\b(הנדסה|יזמות|ייזום|יזום|נדלן|נדל"ן|השקעות|אחזקות|החזקות|פיתוח|'
     r'בנייה|בנין|בניין|תעשיות|נכסים|מגורים|קבלנות|תשתיות|ליסינג|מלונות|'
@@ -155,6 +155,26 @@ def build(raw, cities):
                     "land_ppsqm": win / area if area and area <= MAX_AREA_FOR_PPSQM else None,
                     "dev_share_pct": dev / (win + dev) * 100 if dev else None,
                 })
+    # The source repeats some lots within a tender: same appraisal, area,
+    # development costs and bid list. Keep the first, flag the rest so they
+    # stay visible but are left out of every statistic.
+    seen = {}
+    for lot in lots:
+        key = (lot["tender"], lot["appraisal"], lot["area"], lot["dev"],
+               tuple(b["sum"] for b in lot["bids"]))
+        lot["duplicate_of"] = seen.get(key)
+        seen.setdefault(key, lot["id"])
+    # A lot offered again in a later tender (same place, lot and parcel):
+    # both awards are real records; the earlier one likely did not close.
+    by_parcel = {}
+    for lot in lots:
+        lot["retendered"] = False
+        if lot["gush"]:
+            by_parcel.setdefault((lot["place"], lot["lot"], lot["gush"]), []).append(lot)
+    for group in by_parcel.values():
+        tenders = {l["tender"] for l in group}
+        for lot in group:
+            lot["retendered"] = len(tenders) > 1
     meta = {
         "fetched": raw["fetched_at"][:10],
         "date_from": raw["date_from"],
