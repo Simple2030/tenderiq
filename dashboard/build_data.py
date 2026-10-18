@@ -81,13 +81,19 @@ def pos(v):
     return v if isinstance(v, (int, float)) and v > 0 else None
 
 
+GENERIC_AREAS = {"שלב א", "שלב ב", "שלב ג", "אזור תעשיה", "אזור תעשייה", 'אז"ת', "אזה\"ת"}
+
+
 def place_name(code, hood, cities):
-    """City name when the code is known; otherwise the area name the tender
-    gives (industrial zones and regional councils are missing from the table)."""
+    """City name when the code is known. Otherwise the area name the tender
+    gives (industrial zones and regional councils are missing from the code
+    table), unless that name is generic, in which case the place is unknown."""
     city = cities.get(code)
     if city:
         return city.replace(")יישוב(", "").replace("(יישוב)", "").strip(), True
-    return (hood or f"קוד יישוב {code}"), False
+    if hood and hood not in GENERIC_AREAS:
+        return hood, False
+    return "יישוב לא מזוהה", False
 
 
 def build(raw, cities):
@@ -155,13 +161,13 @@ def build(raw, cities):
                     "land_ppsqm": win / area if area and area <= MAX_AREA_FOR_PPSQM else None,
                     "dev_share_pct": dev / (win + dev) * 100 if dev else None,
                 })
-    # The source repeats some lots within a tender: same appraisal, area,
-    # development costs and bid list. Keep the first, flag the rest so they
+    # Guard against the source repeating a lot within a tender: same lot, winner,
+    # amount, appraisal, area, development costs and bid list. Keep the first, flag the rest so they
     # stay visible but are left out of every statistic.
     seen = {}
     for lot in lots:
-        key = (lot["tender"], lot["appraisal"], lot["area"], lot["dev"],
-               tuple(b["sum"] for b in lot["bids"]))
+        key = (lot["tender"], lot["lot"], lot["winner"], lot["win"], lot["appraisal"],
+               lot["area"], lot["dev"], tuple(b["sum"] for b in lot["bids"]))
         lot["duplicate_of"] = seen.get(key)
         seen.setdefault(key, lot["id"])
     # A lot offered again in a later tender (same place, lot and parcel):
