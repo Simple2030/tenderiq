@@ -138,10 +138,22 @@ jobs:
               with urllib.request.urlopen(urllib.request.Request(url, headers=H), timeout=60) as r:
                   return r.read().decode("utf-8", "replace")
           out = {"api_paths": [], "lookups": {}, "bundle_hits": {}}
-          html = get(SITE)
-          scripts = re.findall(r'src="([^"]+\.js)"', html)
+          from urllib.parse import urljoin
+          html = ""
+          for u in (SITE, SITE + "index.html", "https://apps.land.gov.il/MichrazimSite"):
+              try:
+                  html = get(u); break
+              except Exception as e:
+                  out.setdefault("errors", []).append(f"{u}: {e}")
+          out["html_head"] = html[:3000]
+          scripts = [urljoin(SITE, s) for s in re.findall(r'src="([^"]+\.js[^"]*)"', html)]
+          out["scripts"] = scripts
           for s in scripts:
-              js = get(s if s.startswith("http") else SITE + s.lstrip("/"))
+              try:
+                  js = get(s)
+              except Exception as e:
+                  out.setdefault("errors", []).append(f"{s}: {e}")
+                  continue
               out["api_paths"] += sorted(set(re.findall(r'api/[A-Za-z]+Api/[A-Za-z]+', js)))
               for key in ("KodSugMichraz", "SugMichraz", "KodMerchav", "Merchav", "KodYeudMichraz", "Yeud"):
                   for m in re.finditer(key, js):
