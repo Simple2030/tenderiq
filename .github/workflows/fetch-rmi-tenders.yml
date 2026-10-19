@@ -1,11 +1,24 @@
 name: Fetch RMI Tenders
 
+# Pulls every Israel Land Authority tender with published results whose
+# committee date falls in the window, with full lot and bid details, and
+# commits output/rmi_raw.json.gz to the branch the run was started on.
 on:
   workflow_dispatch:
+    inputs:
+      date_from:
+        description: "Committee date from (YYYY-MM-DD)"
+        required: true
+        default: "2024-04-01"
+      date_to:
+        description: "Committee date to (YYYY-MM-DD, empty = today)"
+        required: false
+        default: ""
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     permissions:
       contents: write
     steps:
@@ -16,122 +29,103 @@ jobs:
       - run: pip install requests
 
       - name: Fetch tenders from RMI
+        env:
+          DATE_FROM: ${{ inputs.date_from }}
+          DATE_TO: ${{ inputs.date_to }}
         run: |
           python3 << 'PYEOF'
-          import json, time, sys
-          from datetime import datetime
+          import gzip, json, os, time
+          from datetime import datetime, timezone
           import requests
 
-          # Hardcoded parameters
-          DATE_FROM = datetime(2024, 4, 1)
-          DATE_TO   = datetime(2026, 4, 12)
+          DATE_FROM = datetime.fromisoformat(os.environ.get("DATE_FROM") or "2024-04-01")
+          DATE_TO = datetime.fromisoformat(os.environ["DATE_TO"]) if os.environ.get("DATE_TO") else datetime.now()
 
           BASE = "https://apps.land.gov.il/MichrazimSite/api"
-          HEADERS = {
+          S = requests.Session()
+          S.headers.update({
               "User-Agent": "datagov-external-client",
               "Content-Type": "application/json",
               "Accept": "application/json, text/plain, */*",
               "Origin": "https://apps.land.gov.il",
               "Referer": "https://apps.land.gov.il/MichrazimSite/",
-          }
-          S = requests.Session()
-          S.headers.update(HEADERS)
+          })
 
-          # Step 1: Fetch ALL tenders with results (no date filter - API ignores it)
-          payload = {
-              "ActiveQuickSearch": False,
-              "ActiveMichraz": False,
-              "hasResults": True,
-          }
-          print(f"[1] Fetching all tenders with results...", flush=True)
-          r = S.post(f"{BASE}/SearchApi/Search", json=payload, timeout=60)
+          def get(url, params):
+              for attempt in range(4):
+                  try:
+                      r = S.get(url, params=params, timeout=60)
+                      r.raise_for_status()
+                      return r.json()
+                  except Exception:
+                      if attempt == 3:
+                          raise
+                      time.sleep(2 ** attempt)
+
+          # The search endpoint ignores its date filters, so filter here.
+          r = S.post(f"{BASE}/SearchApi/Search", json={"ActiveQuickSearch": False, "ActiveMichraz": False, "hasResults": True}, timeout=120)
           r.raise_for_status()
           data = r.json()
           all_tenders = data if isinstance(data, list) else data.get("results", [])
-          print(f"[1] Got {len(all_tenders)} total tenders from API", flush=True)
+          print(f"{len(all_tenders)} tenders with results in the source", flush=True)
 
-          # Step 2: Client-side filter by VaadaDate
-          def parse_date(s):
-              if not s: return None
-              try: return datetime.fromisoformat(s.replace("+03:00","").replace("+02:00",""))
-              except: return None
+          def vaada(t):
+              s = t.get("VaadaDate")
+              try:
+                  return datetime.fromisoformat(s[:19]) if s else None
+              except ValueError:
+                  return None
 
-          filtered = []
-          for t in all_tenders:
-              vd = parse_date(t.get("VaadaDate"))
-              if vd and DATE_FROM <= vd <= DATE_TO:
-                  filtered.append(t)
-          print(f"[2] After date filter ({DATE_FROM.date()} to {DATE_TO.date()}): {len(filtered)} tenders", flush=True)
+          in_range = [t for t in all_tenders if (d := vaada(t)) and DATE_FROM <= d <= DATE_TO]
+          print(f"{len(in_range)} with committee date {DATE_FROM.date()} to {DATE_TO.date()}", flush=True)
 
-          # Step 3: Split by category
-          cats = {
-              "mechir_lemishtaken": [],  # SugMichraz 2 or 3
-              "yazamot": [],             # SugMichraz 1
-              "malonaut": [],            # YeudMichraz 4, 6, or 7
-          }
-          for t in filtered:
-              sug = t.get("KodSugMichraz")
-              yeud = t.get("KodYeudMichraz")
-              if yeud in (4, 6, 7):
-                  cats["malonaut"].append(t)
-              elif sug in (2, 3):
-                  cats["mechir_lemishtaken"].append(t)
-              elif sug == 1:
-                  cats["yazamot"].append(t)
+          # Same three buckets as before so the build scripts keep working;
+          # tenders of any other type go to "other". No cap per bucket.
+          cats = {"mechir_lemishtaken": [], "yazamot": [], "malonaut": [], "other": []}
+          for t in in_range:
+              sug, yeud = t.get("KodSugMichraz"), t.get("KodYeudMichraz")
+              key = ("malonaut" if yeud in (4, 6, 7) else "mechir_lemishtaken" if sug in (2, 3)
+                     else "yazamot" if sug == 1 else "other")
+              cats[key].append(t)
 
-          for name, lst in cats.items():
-              print(f"  {name}: {len(lst)} tenders", flush=True)
-
-          # Step 4: Fetch details for up to 50 per category
           out = {
-              "fetched_at": datetime.utcnow().isoformat(),
+              "fetched_at": datetime.now(timezone.utc).isoformat(),
               "date_from": str(DATE_FROM.date()),
               "date_to": str(DATE_TO.date()),
               "total_with_results": len(all_tenders),
-              "total_in_date_range": len(filtered),
+              "total_in_date_range": len(in_range),
               "categories": {},
+              "failed": [],
           }
-
+          done = 0
           for name, basics in cats.items():
-              print(f"\n=== {name} ({len(basics)} basics, fetching details for max 50) ===", flush=True)
-              basics = basics[:50]
-              cat = {"search_count": len(basics), "tenders": []}
-              for i, b in enumerate(basics, 1):
+              tenders = []
+              for b in basics:
                   mid = b.get("MichrazID")
-                  if not mid: continue
                   try:
-                      time.sleep(0.5)
-                      r2 = S.get(f"{BASE}/MichrazDetailsApi/Get",
-                                 params={"michrazID": mid}, timeout=30)
-                      r2.raise_for_status()
-                      det = r2.json()
-                      cat["tenders"].append({"basic": b, "details": det})
-                      vaada = b.get("VaadaDate","")[:10]
-                      mname = b.get("MichrazName","?")
-                      print(f"  [{i}/{len(basics)}] {mname} vaada={vaada} OK", flush=True)
+                      det = get(f"{BASE}/MichrazDetailsApi/Get", params={"michrazID": mid})
+                      tenders.append({"basic": b, "details": det})
                   except Exception as e:
-                      print(f"  [{i}/{len(basics)}] {mid} FAIL: {e}", flush=True)
-              out["categories"][name] = cat
+                      out["failed"].append({"MichrazID": mid, "error": str(e)[:200]})
+                  done += 1
+                  if done % 25 == 0:
+                      print(f"  {done}/{len(in_range)}", flush=True)
+                  time.sleep(0.4)
+              out["categories"][name] = {"search_count": len(basics), "tenders": tenders}
+              print(f"{name}: {len(tenders)} of {len(basics)} fetched", flush=True)
 
-          with open("rmi_raw.json", "w", encoding="utf-8") as f:
-              json.dump(out, f, ensure_ascii=False, indent=2)
-          sz = len(open("rmi_raw.json").read())
-          print(f"\nDone! wrote rmi_raw.json ({sz:,} bytes)")
+          os.makedirs("output", exist_ok=True)
+          with gzip.open("output/rmi_raw.json.gz", "wt", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+          print(f"wrote output/rmi_raw.json.gz ({os.path.getsize('output/rmi_raw.json.gz'):,} bytes), "
+                f"{len(out['failed'])} failed", flush=True)
           PYEOF
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rmi-raw-json
-          path: rmi_raw.json
-          retention-days: 14
-
-      - name: Commit to repo
+      - name: Commit to the branch
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p output
-          cp rmi_raw.json output/rmi_raw.json
-          git add output/rmi_raw.json
+          git add output/rmi_raw.json.gz
           if git diff --cached --quiet; then
             echo "nothing to commit"
           else
