@@ -14,6 +14,10 @@ on:
         description: "Committee date to (YYYY-MM-DD, empty = today)"
         required: false
         default: ""
+      codes_only:
+        description: "Only save the site's code tables (output/rmi_codes.json)"
+        type: boolean
+        default: false
 
 jobs:
   fetch:
@@ -29,6 +33,7 @@ jobs:
       - run: pip install requests
 
       - name: Fetch tenders from RMI
+        if: ${{ !inputs.codes_only }}
         env:
           DATE_FROM: ${{ inputs.date_from }}
           DATE_TO: ${{ inputs.date_to }}
@@ -121,11 +126,43 @@ jobs:
                 f"{len(out['failed'])} failed", flush=True)
           PYEOF
 
+      - name: Fetch code tables
+        if: ${{ inputs.codes_only }}
+        run: |
+          python3 << 'PYEOF'
+          import json, re, urllib.request
+          H = {"User-Agent": "datagov-external-client", "Origin": "https://apps.land.gov.il",
+               "Referer": "https://apps.land.gov.il/MichrazimSite/", "Accept": "application/json, text/plain, */*"}
+          SITE = "https://apps.land.gov.il/MichrazimSite/"
+          def get(url):
+              with urllib.request.urlopen(urllib.request.Request(url, headers=H), timeout=60) as r:
+                  return r.read().decode("utf-8", "replace")
+          out = {"api_paths": [], "lookups": {}, "bundle_hits": {}}
+          html = get(SITE)
+          scripts = re.findall(r'src="([^"]+\.js)"', html)
+          for s in scripts:
+              js = get(s if s.startswith("http") else SITE + s.lstrip("/"))
+              out["api_paths"] += sorted(set(re.findall(r'api/[A-Za-z]+Api/[A-Za-z]+', js)))
+              for key in ("KodSugMichraz", "SugMichraz", "KodMerchav", "Merchav", "KodYeudMichraz", "Yeud"):
+                  for m in re.finditer(key, js):
+                      out["bundle_hits"].setdefault(key, []).append(js[max(0, m.start() - 300): m.end() + 600])
+          out["api_paths"] = sorted(set(out["api_paths"]))
+          for p in out["api_paths"]:
+              if re.search(r'(?i)lookup|table|code|kod|list|enum|reference|param', p):
+                  try:
+                      out["lookups"][p] = json.loads(get("https://apps.land.gov.il/MichrazimSite/" + p))
+                  except Exception as e:
+                      out["lookups"][p] = f"error: {e}"[:200]
+          for k in out["bundle_hits"]:
+              out["bundle_hits"][k] = out["bundle_hits"][k][:15]
+          json.dump(out, open("output/rmi_codes.json", "w"), ensure_ascii=False, indent=1)
+          print(out["api_paths"])
+          PYEOF
       - name: Commit to the branch
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/rmi_raw.json.gz
+          git add output/rmi_raw.json.gz output/rmi_codes.json 2>/dev/null || git add output/
           if git diff --cached --quiet; then
             echo "nothing to commit"
           else
