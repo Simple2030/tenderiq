@@ -154,8 +154,6 @@ jobs:
               except Exception as e:
                   out.setdefault("errors", []).append(f"{s}: {e}")
                   continue
-              if "main-" in s:
-                  open("output/rmi_site_main.js", "w").write(js)
               out["api_paths"] += sorted(set(re.findall(r'api/[A-Za-z]+Api/[A-Za-z]+', js)))
               for key in ("KodSugMichraz", "SugMichraz", "KodMerchav", "Merchav", "KodYeudMichraz", "Yeud"):
                   for m in re.finditer(key, js):
@@ -167,6 +165,12 @@ jobs:
                       out["lookups"][p] = json.loads(get("https://apps.land.gov.il/MichrazimSite/" + p))
                   except Exception as e:
                       out["lookups"][p] = f"error: {e}"[:200]
+          # The site loads every code table from this endpoint (table 215 tender
+          # type, 66 region, 318 land use, 291 bid description).
+          try:
+              out["general_tables"] = json.loads(get("https://apps.land.gov.il/MichrazimSite/api/GeneralTablesApi"))
+          except Exception as e:
+              out["general_tables"] = f"error: {e}"[:200]
           for k in out["bundle_hits"]:
               out["bundle_hits"][k] = out["bundle_hits"][k][:15]
           json.dump(out, open("output/rmi_codes.json", "w"), ensure_ascii=False, indent=1)
