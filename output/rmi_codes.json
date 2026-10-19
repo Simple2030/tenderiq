@@ -96,5 +96,847 @@
   "https://apps.land.gov.il/MichrazimSite/polyfills-5FDKUQTZ.js",
   "https://apps.land.gov.il/MichrazimSite/main-Z6HVE33F.js",
   "https://apps.land.gov.il/MichrazimSite/assets/scripts/focus-visible.js"
+ ],
+ "general_tables": [
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 8,
+   "Value": "דיור במחיר מופחת",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 3
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 6,
+   "Value": "דיור להשכרה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 9
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 2,
+   "Value": "הרשמה והגרלה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 7
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 7,
+   "Value": "מחיר למשתכן",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 8
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 5,
+   "Value": "מחיר מטרה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 2
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 9,
+   "Value": "מכרז ייזום",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 4
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 3,
+   "Value": "מכרז למגרש בלתי מסוים",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 5
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 1,
+   "Value": "מכרז פומבי רגיל",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 1
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 11,
+   "Value": "מכרזי החברה לפיתוח עכו ",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 11
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 10,
+   "Value": "מכרזי עמידר",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 10
+  },
+  {
+   "TableID": 215,
+   "TableName": "סוג מכרז",
+   "Code": 4,
+   "Value": "קדימות על פי עדיפות",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 6
+  },
+  {
+   "TableID": 237,
+   "TableName": "סטטוס מכרז מורחב",
+   "Code": 7,
+   "Value": "בוטל",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 237,
+   "TableName": "סטטוס מכרז מורחב",
+   "Code": 3,
+   "Value": "טרם הוכרזו זוכים",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 237,
+   "TableName": "סטטוס מכרז מורחב",
+   "Code": 6,
+   "Value": "ממתין להגרלה/בחירת מגרשים",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 237,
+   "TableName": "סטטוס מכרז מורחב",
+   "Code": 1,
+   "Value": "מפורסם",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 237,
+   "TableName": "סטטוס מכרז מורחב",
+   "Code": 5,
+   "Value": "נדון בוועדת מכרזים",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 237,
+   "TableName": "סטטוס מכרז מורחב",
+   "Code": 4,
+   "Value": "נדחה/מוקפא",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 237,
+   "TableName": "סטטוס מכרז מורחב",
+   "Code": 2,
+   "Value": "פתוח להגשת הצעות",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 1,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 0,
+   "Value": "מטה הרשות",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 1,
+   "Value": "ירושלים",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 2,
+   "Value": "צפון",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 3,
+   "Value": "חיפה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 4,
+   "Value": "מרכז",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 5,
+   "Value": "תל אביב",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 6,
+   "Value": "דרום",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 7,
+   "Value": "יו\"ש",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 66,
+   "TableName": "מרחבים",
+   "Code": 8,
+   "Value": "עזה",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 291,
+   "TableName": "הצעה - מצב זכיה",
+   "Code": 4,
+   "Value": "הגרלה/התמחרות",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 291,
+   "TableName": "הצעה - מצב זכיה",
+   "Code": 1,
+   "Value": "הצעה זוכה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 291,
+   "TableName": "הצעה - מצב זכיה",
+   "Code": 3,
+   "Value": "הצעה פסולה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 291,
+   "TableName": "הצעה - מצב זכיה",
+   "Code": 2,
+   "Value": "הצעה שניה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 99,
+   "Value": "אחר",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 6,
+   "Value": "אנרגיה מתחדשת",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 2,
+   "Value": "בנייה נמוכה/צמודת קרקע",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 1,
+   "Value": "בנייה רוויה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 3,
+   "Value": "דיור מוגן",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 5,
+   "Value": "כריה וחציבה",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 7,
+   "Value": "תחנת כוח",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": 318,
+   "TableName": "ייעוד מכרז",
+   "Code": 4,
+   "Value": "תעסוקה (תעשייה, מסחר, תיירות ושימושים כלכלים נוספים)",
+   "Group": null,
+   "Status": 1,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 1,
+   "Value": "בנייה נמוכה/צמודת קרקע",
+   "Group": "מגורים",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 2,
+   "Value": "בנייה רוויה",
+   "Group": "מגורים",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 3,
+   "Value": "מסחר ו/או משרדים",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 4,
+   "Value": "תעשיה",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 5,
+   "Value": "מוסדות ו/או בניינים ציבוריים",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 6,
+   "Value": "חניונים",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 7,
+   "Value": "תחנות דלק",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 8,
+   "Value": "מלונאות",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 9,
+   "Value": "ספורט ו/או נופש ו/או תיירות ו/או מלונאות",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 10,
+   "Value": "כרייה וחציבה",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 11,
+   "Value": "חקלאות",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 12,
+   "Value": "מגורים ו/או מסחר ו/או מלונאות ו/או נופש",
+   "Group": "מגורים",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 13,
+   "Value": "דיור מוגן (בית אבות)",
+   "Group": "מגורים",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 14,
+   "Value": "נכסי הרשות - מכירה - מגורים",
+   "Group": "מגורים",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 15,
+   "Value": "נכסי הרשות - מכירה - אחר",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 16,
+   "Value": "עודפים",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 17,
+   "Value": "נופש וחקלאות",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 18,
+   "Value": "הטמנת פסולת",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 20,
+   "Value": "דיור להשכרה ",
+   "Group": "מגורים",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 21,
+   "Value": "נכסי הרשות - השכרה - מגורים",
+   "Group": "מגורים",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 22,
+   "Value": "נכסי הרשות - השכרה - אחר",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 23,
+   "Value": "אנרגיה מתחדשת",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 24,
+   "Value": "תחנת כוח",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 25,
+   "Value": "תכנון וביצוע לכריה וחציבה",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 26,
+   "Value": "תעסוקה",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -1,
+   "TableName": "ייעוד מכרז",
+   "Code": 99,
+   "Value": "אחר",
+   "Group": "אחר",
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -3,
+   "TableName": "סטטוס מכרז",
+   "Code": 0,
+   "Value": "בהכנה",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -3,
+   "TableName": "סטטוס מכרז",
+   "Code": 1,
+   "Value": "מפורסם",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -3,
+   "TableName": "סטטוס מכרז",
+   "Code": 2,
+   "Value": "נדון",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -3,
+   "TableName": "סטטוס מכרז",
+   "Code": 3,
+   "Value": "בוטל",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 0
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 1,
+   "Value": "אנשים עם מוגבלות",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 1
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 8,
+   "Value": "חיילי מילואים לוחמים בני מקום תושבי היישוב",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 2
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 10,
+   "Value": "חיילי מילואים לוחמים בני מקום תושבי המועצה",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 3
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 11,
+   "Value": "חיילי מילואים לוחמים בני מקום",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 4
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 7,
+   "Value": "חיילי מילואים לוחמים",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 5
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 9,
+   "Value": "חיילי מילואים פעילים בני מקום תושבי היישוב",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 6
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 12,
+   "Value": "חיילי מילואים פעילים בני מקום תושבי המועצה",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 7
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 13,
+   "Value": "חיילי מילואים פעילים בני מקום",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 8
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 6,
+   "Value": "חיילי מילואים",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 9
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 4,
+   "Value": "בני מיעוטים מומלצי כוחות הביטחון (בעבר ובהווה)",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 10
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 14,
+   "Value": "בני מקום תושבי היישוב",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 11
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 15,
+   "Value": "בני מקום תושבי המועצה",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 12
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 16,
+   "Value": "בני מקום",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 14
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 3,
+   "Value": "חסרי דיור",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 15
+  },
+  {
+   "TableID": -2,
+   "TableName": "אוכלוסיות",
+   "Code": 5,
+   "Value": "כלל הציבור",
+   "Group": null,
+   "Status": 0,
+   "MichrazPail": 0,
+   "OrderBy": 16
+  }
  ]
 }
