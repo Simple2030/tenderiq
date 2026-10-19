@@ -154,6 +154,8 @@ jobs:
               except Exception as e:
                   out.setdefault("errors", []).append(f"{s}: {e}")
                   continue
+              if "main-" in s:
+                  open("output/rmi_site_main.js", "w").write(js)
               out["api_paths"] += sorted(set(re.findall(r'api/[A-Za-z]+Api/[A-Za-z]+', js)))
               for key in ("KodSugMichraz", "SugMichraz", "KodMerchav", "Merchav", "KodYeudMichraz", "Yeud"):
                   for m in re.finditer(key, js):
@@ -174,7 +176,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/rmi_raw.json.gz output/rmi_codes.json 2>/dev/null || git add output/
+          git add output/
           if git diff --cached --quiet; then
             echo "nothing to commit"
           else
