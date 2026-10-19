@@ -83,6 +83,20 @@ select,input[type=search]{font:inherit;font-size:13px;height:34px;border:1px sol
 .mini td{padding:6px 8px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
 .mini th.num,.mini td.num{text-align:left}
 .mini td.num,.mini th{white-space:nowrap}
+.dv{display:grid;gap:6px}
+.dvr{display:grid;grid-template-columns:minmax(0,30%) minmax(0,1fr) 128px;gap:10px;align-items:center;font-size:13px}
+.dvr .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dvr .name small{color:var(--muted);font-size:11px}
+.dvr .t{height:10px;background:var(--track);position:relative}
+.dvr .t::after{content:"";position:absolute;inset-block:-3px;right:50%;border-inline-start:1px solid var(--muted)}
+.dvr .t i{position:absolute;top:0;bottom:0;background:var(--up)}
+.dvr .t i.n{background:var(--down)}
+.dvr.thin .t i{opacity:.45}
+.dvr .val{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted);white-space:nowrap;text-align:left}
+.dvr .val b{color:var(--fg);font-weight:600}
+.devs td small{display:block;font-size:11px;color:var(--muted)}
+.devs .part{color:var(--warn)}
+.scroll.short{max-height:560px}
 .card.wide{grid-column:1/-1}
 .dwrap{position:sticky;right:16px;width:min(820px,calc(100vw - 66px))}
 .scroll:has(tr.detail){max-height:min(1100px,calc(100vh - 40px))}
@@ -147,7 +161,7 @@ a{color:var(--accent)}
   .grid3>.card{scroll-snap-align:start}}
 @media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(odd){border-inline-start:0}.kpi:nth-child(n+3){border-top:1px solid var(--line2)}
   .pill.src{display:none}.reset{margin-inline-start:0}.scroll{max-height:75vh}}
-@media (max-width:420px){.mini th{white-space:normal}.mini th,.mini td{padding-inline:5px}#t-band td:first-child,#t-single td:first-child{white-space:nowrap}#t-repeat td:first-child{white-space:normal;overflow-wrap:anywhere}select,input[type=search]{min-width:0;width:100%}.field{width:100%}.kpi strong{font-size:19px}.rung{grid-template-columns:18px minmax(0,1fr) 120px}.rung>span small{display:none}}
+@media (max-width:420px){.mini th{white-space:normal}.mini th,.mini td{padding-inline:5px}#t-band td:first-child,#t-single td:first-child{white-space:nowrap}#t-repeat td:first-child{white-space:normal;overflow-wrap:anywhere}select,input[type=search]{min-width:0;width:100%}.field{width:100%}.kpi strong{font-size:19px}.rung{grid-template-columns:18px minmax(0,1fr) 120px}.dvr{grid-template-columns:minmax(0,34%) minmax(0,1fr) 96px}.rung>span small{display:none}}
 @media (prefers-reduced-motion:no-preference){.fill,.hcol i{transition:width .25s,height .25s}}
 </style>
 
@@ -198,6 +212,17 @@ a{color:var(--accent)}
     <div class="card"><h2>שחקנים חוזרים</h2><p class="sub">זוכים בשני מגרשים לפחות. לחיצה מסננת לזוכה</p><table class="mini" id="t-repeat"></table></div>
     <div class="card"><h2>מחיר קרקע למ״ר לפי יישוב</h2><p class="sub">חציון סכום הזכייה חלקי שטח המגרש, לפני הוצאות פיתוח. יישובים עם 5 מגרשים לפחות</p><div class="bars" id="b-ppsqm"></div></div>
     <div class="card"><h2>כיסוי המדגם לאורך זמן</h2><p class="sub">מגרשים במדגם לפי רבעון של ועדת המכרזים. משקף את המכרזים שנשלפו, לא את פעילות השוק</p><div class="hist" id="h-time"></div><div class="hax" id="h-time-ax"></div><div class="hnote" id="h-time-n"></div></div>
+  </section>
+
+  <section class="grid2" aria-label="זמן ואזור">
+    <div class="card"><h2>מגמה: זכייה מול שומה לפי רבעון</h2><p class="sub">חציון סכום הזכייה מול שומת המגרש, לפי רבעון של ועדת המכרזים. רבעון עם פחות מ־10 מגרשים מוצג חיוור</p><div class="dv" id="d-trend"></div><div class="hnote" id="d-trend-n"></div></div>
+    <div class="card"><h2>השוואה בין מרחבים</h2><p class="sub">חציון זכייה מול שומה לפי מרחב רמ״י שבו פורסם המכרז. מרחב עם פחות מ־10 מגרשים מוצג חיוור</p><div class="dv" id="d-region"></div><div class="hnote" id="d-region-n"></div></div>
+  </section>
+
+  <section class="card tablecard" aria-labelledby="dev-h">
+    <div class="tablehead"><h2 id="dev-h">כמה זכה כל יזם ב־12 החודשים האחרונים</h2><span id="dev-count"></span></div>
+    <div class="scroll short"><table class="mini devs" id="t-devs"></table></div>
+    <div class="hnote" id="dev-n" style="padding:0 16px 12px"></div>
   </section>
 
   <section class="card tablecard" aria-labelledby="t-h">
@@ -420,7 +445,37 @@ function render(){
   const firstPart=(fm-1)%3!==0, lastPart=!(tm%3===0&&ty&&new Date(ty,tm,0).getDate()===Number(M.date_to.slice(8)));
   const tb=qs.map(([y,qq],i)=>({label:`Q${qq} ${y}`+((i===0&&firstPart)||(i===qs.length-1&&lastPart)?' (חלקי)':''),lo:y*10+qq,hi:y*10+qq+1,part:(i===0&&firstPart)||(i===qs.length-1&&lastPart)}));
   hist('h-time',tb,rows.filter(r=>r.date).map(r=>{const [y,m]=r.date.split('-').map(Number);return y*10+Math.ceil(m/3);}));
-  $('h-time-n').textContent=`המדגם כולל עד 50 מכרזים לכל קטגוריה, ולכן ההתפלגות בזמן משקפת את השליפה ולא את השוק. רבעון מקווקו הוא רבעון חלקי (הנתונים עד ${dmy(M.date_to)}). n=${nf.format(rows.filter(r=>r.date).length)}`;
+  $('h-time-n').textContent=`כל המכרזים עם תוצאות בטווח נשלפו, ולכן זו פעילות המכרזים שפורסמו לה תוצאות. רבעון מקווקו הוא רבעון חלקי (הנתונים עד ${dmy(M.date_to)}). n=${nf.format(rows.filter(r=>r.date).length)}`;
+
+  // diverging rows: median win vs appraisal per group, centre line = the appraisal
+  const dv=(id,groups,label)=>{
+    const g=groups.map(([k,rs])=>({k,rs,m:median(vals(rs,'vs_appraisal_pct')),n:vals(rs,'vs_appraisal_pct').length})).filter(x=>x.m!=null);
+    if(!g.length){$(id).innerHTML='<div class="empty">אין מגרשים עם שומה בסינון הזה.</div>';return g;}
+    const mx=Math.max(10,...g.map(x=>Math.abs(x.m)));
+    $(id).innerHTML=g.map(x=>{const w=Math.abs(x.m)/mx*50;return `<div class="dvr${x.n<10?' thin':''}" role="img" aria-label="${esc(label(x))}: ${sgn(x.m)} מול השומה, ${x.n} מגרשים"><span class="name">${label(x)}</span><span class="t"><i class="${x.m<0?'n':''}" style="${x.m<0?'right':'left'}:50%;width:${w.toFixed(1)}%"></i></span><span class="val"><b>${ltr(sgn(x.m))}</b> · n=${nf.format(x.n)}</span></div>`;}).join('');
+    return g;
+  };
+  const qOf=d=>{const [y,m]=d.split('-').map(Number);return `${y} Q${Math.ceil(m/3)}`;};
+  const byQ=new Map(); rows.forEach(r=>{if(r.date){const k=qOf(r.date);(byQ.get(k)||byQ.set(k,[]).get(k)).push(r);}});
+  const tg=dv('d-trend',[...byQ].sort((a,b)=>a[0]<b[0]?-1:1),x=>{const [y,qq]=x.k.split(' ');const part=(x.k===qOf(M.date_to)&&lastPart)||(x.k===qOf(M.date_from)&&firstPart);return `${ltr(qq+' '+y)}${part?' <small>(חלקי)</small>':''}`;});
+  $('d-trend-n').textContent=tg.length?`ירוק מימין לקו: מעל השומה. אדום משמאל: מתחת לשומה. הרכב המגרשים משתנה בין רבעונים (יישובים, סוגי מכרז), ולכן זו לא מדידה של מחיר אותו מגרש לאורך זמן.`:'';
+  const byR=new Map(); rows.forEach(r=>{const k=r.region||'לא צוין';(byR.get(k)||byR.set(k,[]).get(k)).push(r);});
+  const rg=dv('d-region',[...byR].sort((a,b)=>b[1].length-a[1].length),x=>{const pl=[...new Set(x.rs.map(r=>r.place))];return `${esc(x.k)} <small>${esc(pl.slice(0,2).join(', '))}${pl.length>2?'…':''}</small>`;});
+  $('d-region-n').textContent=rg.length?`המרחב הוא החלוקה של רמ״י, לא מחוז. ${byR.has('מרחב 7')?'למרחב 7 אין שם בטבלת הקודים הציבורית; היישובים שלו מוצגים לידו. ':''}`:'';
+
+  // last 12 months per winner: amounts, development costs, units, free market vs programme
+  const end=new Date(M.date_to), start=new Date(end); start.setFullYear(end.getFullYear()-1);
+  const sIso=start.toISOString().slice(0,10);
+  const yr=rows.filter(r=>r.date&&r.date>sIso&&r.date<=M.date_to);
+  const dm=new Map(); yr.forEach(r=>{(dm.get(r.winner)||dm.set(r.winner,[]).get(r.winner)).push(r);});
+  const sumBy=(g,f)=>g.reduce((s,r)=>s+(f(r)||0),0);
+  const devs=[...dm].map(([w,g])=>({w,g,lots:g.length,win:sumBy(g,r=>r.win),dev:sumBy(g,r=>r.dev),tot:sumBy(g,r=>r.total_cost),units:sumBy(g,r=>r.units_attributed),part:g.some(r=>r.units_partial),free:sumBy(g.filter(r=>r.market==='שוק חופשי'),r=>r.total_cost),prog:sumBy(g.filter(r=>r.market!=='שוק חופשי'),r=>r.total_cost)})).sort((a,b)=>b.tot-a.tot);
+  const shownD=devs.slice(0,40);
+  $('dev-count').textContent=`${dmy(sIso)} – ${dmy(M.date_to)} · ${nf.format(devs.length)} זוכים · ${nf.format(yr.length)} מגרשים · לחיצה מסננת לזוכה`;
+  $('t-devs').innerHTML=shownD.length?`<thead><tr><th>זוכה</th><th class="num">מגרשים</th><th class="num">זכייה</th><th class="num">הוצאות פיתוח</th><th class="num">סה״כ עם פיתוח</th><th class="num">שוק חופשי</th><th class="num">מחיר למשתכן / מטרה</th><th class="num">יחידות דיור</th></tr></thead><tbody>${shownD.map(d=>`<tr class="clickable" data-n="${esc(d.w)}" tabindex="0"><td>${esc(d.w)}<small>${esc([...new Set(d.g.map(r=>r.place))].slice(0,3).join(' · '))}</small></td><td class="num">${d.lots}</td><td class="num">${short(d.win)}</td><td class="num">${d.dev?short(d.dev):'—'}</td><td class="num"><b>${short(d.tot)}</b></td><td class="num">${d.free?short(d.free):'—'}</td><td class="num">${d.prog?short(d.prog):'—'}</td><td class="num">${d.units?nf.format(d.units):'—'}${d.part?` <span class="part" title="במכרז עם כמה זוכים; היחידות מפורסמות למכרז כולו ולא למגרש">+ חלקי</span>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">אין זכיות ב־12 החודשים האחרונים בסינון הזה.</td></tr></tbody>';
+  activate($('t-devs'),pickWinner);
+  const progYr=yr.filter(r=>r.market!=='שוק חופשי').length;
+  $('dev-n').innerHTML=`<b>סה״כ עם פיתוח</b>: סכום הזכייה ועוד הוצאות הפיתוח שפורסמו למגרש. <b>יחידות דיור</b> מפורסמות במקור למכרז כולו, לא למגרש: הן נספרות לזוכה רק כשזכה בכל המגרשים המתומחרים של המכרז. "+ חלקי": זכה גם במכרזים עם כמה זוכים, שבהם היחידות לא מיוחסות. <b>מחיר למשתכן / מטרה</b>: מכרזים מסוג מחיר מטרה ודיור במחיר מופחת${progYr?'':'. בסינון הזה אין מגרשים כאלה עם סכום זכייה; ברוב המכרזים האלה המגרשים מוקצים בהגרלה וללא מחיר, ולכן הם לא בניתוח'}.${devs.length>shownD.length?` מוצגים ${shownD.length} הזוכים הגדולים מתוך ${nf.format(devs.length)}.`:''}`;
 
   renderTable(all);
 }

@@ -38,6 +38,7 @@ are housing-lottery allocations (no price, no bids) or have no winner.
 Usage:  python3 dashboard/build_data.py [raw.json] [out.json]
 """
 
+import gzip
 import json
 import re
 import sys
@@ -45,7 +46,9 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-RAW = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "output" / "rmi_raw.json"
+RAW = Path(sys.argv[1]) if len(sys.argv) > 1 else next(
+    (p for p in (ROOT / "output" / "rmi_raw.json.gz", ROOT / "output" / "rmi_raw.json") if p.exists()),
+    ROOT / "output" / "rmi_raw.json.gz")
 OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "dashboard" / "data.json"
 
 CATEGORY_HE = {
@@ -54,7 +57,15 @@ CATEGORY_HE = {
     # Fetched with land-use codes 4/6/7 on the assumption they meant hotels; the
     # lots returned are in industrial and employment zones.
     "malonaut": "תעשייה ומסחר",
+    "other": "אחר",
 }
+# KodMerchav, the Israel Land Authority region, named as in the authority's
+# reference list (remy-mcp reference_models.py). Codes outside it are shown
+# by number rather than guessed.
+REGION_HE = {1: 'יו"ש', 2: "דרום", 3: "חיפה", 4: "תל אביב", 5: "ירושלים", 6: "מרכז"}
+# Tender types that are subsidised-housing programmes (מחיר למשתכן / מחיר מטרה /
+# דיור במחיר מופחת) versus free-market tenders, by KodSugMichraz.
+PROGRAMME_TYPES = {2, 3}
 STATUS_MARKERS = ("הצעות לא תקינות", "אין הצעות", "המציע זכה במתחם אחר",
                   "הצעות לא בטווח", "לא נתקבלו הצעות")
 
@@ -135,8 +146,13 @@ def build(raw, cities):
                 appraisal = pos(tik.get("mechirShuma"))
                 dev = pos(tik.get("HotzaotPituach"))
                 area = pos(tik.get("Shetach"))
+                region = b.get("KodMerchav")
                 lots.append({
                     "id": f'{b.get("MichrazID")}-{tik.get("TikID")}',
+                    "tender_id": b.get("MichrazID"),
+                    "region": REGION_HE.get(region, f"מרחב {region}" if region else None),
+                    "market": "מחיר למשתכן / מטרה" if b.get("KodSugMichraz") in PROGRAMME_TYPES else "שוק חופשי",
+                    "total_cost": win + dev if dev else win,
                     "tender": b.get("MichrazName"),
                     "url": f'https://apps.land.gov.il/MichrazimSite/#/michraz/{b.get("MichrazID")}',
                     "date": (b.get("VaadaDate") or "")[:10] or None,
@@ -168,6 +184,18 @@ def build(raw, cities):
                     "land_ppsqm": win / area if area and area <= MAX_AREA_FOR_PPSQM else None,
                     "dev_share_pct": dev / (win + dev) * 100 if dev else None,
                 })
+    # Housing units are published per tender, not per lot. A winner gets the
+    # tender's units only when it won every priced lot of that tender;
+    # otherwise units stay empty for its lots rather than being split.
+    by_tender = {}
+    for lot in lots:
+        by_tender.setdefault(lot["tender_id"], []).append(lot)
+    for group in by_tender.values():
+        winners = {l["winner"] for l in group}
+        for i, lot in enumerate(group):
+            lot["units_attributed"] = lot["tender_units"] if len(winners) == 1 and i == 0 else None
+            lot["units_partial"] = len(winners) > 1 and bool(lot["tender_units"])
+
     # Guard against the source repeating a lot within a tender: same lot, winner,
     # amount, appraisal, area, development costs and bid list. Keep the first, flag the rest so they
     # stay visible but are left out of every statistic.
@@ -195,13 +223,16 @@ def build(raw, cities):
         "tenders_with_results_all_years": raw["total_with_results"],
         "tenders_in_range": raw["total_in_date_range"],
         "tenders_fetched": sum(len(b["tenders"]) for b in raw["categories"].values()),
+        "failed": len(raw.get("failed", [])),
         "dropped": dropped,
     }
     return {"meta": meta, "lots": lots}
 
 
 def main():
-    raw = json.loads(RAW.read_text(encoding="utf-8"))
+    opener = gzip.open if RAW.suffix == ".gz" else open
+    with opener(RAW, "rt", encoding="utf-8") as f:
+        raw = json.load(f)
     data = build(raw, load_city_names())
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
