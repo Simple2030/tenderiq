@@ -1,7 +1,7 @@
 """
 build_data.py
 =============
-Turn output/rmi_raw.json (Israel Land Authority tender payload) into the data
+Turn output/rmi_raw.json.gz (Israel Land Authority tender payload) into the data
 the dashboard renders. Only values present in the source are used; nothing is
 estimated or imputed.
 
@@ -20,16 +20,18 @@ Derived metrics, each computed only when its inputs exist in the source:
   runner_up          the next bid below the winning bid; a second bid equal
                      to the winning bid counts, giving a 0% gap
   gap_pct            winning bid / runner_up - 1            (needs 2+ bids)
-  top_not_winner     a bid higher than the winning bid exists on the lot.
-                     The source marks the winning bid (HatzaaDescription=1)
-                     but not why a higher bid lost. max_to_win records the
-                     tender's cap on lots per bidder, when published.
+  top_not_winner     a valid bid higher than the winning bid exists on the lot.
+                     The source marks each bid (HatzaaDescription, table 291):
+                     1 winning, 2 second, 3 disqualified. Disqualified bids
+                     are kept for display and left out of runner_up, win_rank
+                     and this flag. max_to_win records the tender's cap on
+                     lots per bidder, when published.
   land_ppsqm         winning bid / lot area (Shetach), land only; left empty
                      for lots over 50,000 sqm (quarries, regional plots)
 
-Category: tenders fetched as residential (יזמות) that carry a non-residential
-land use (KodYeudMichraz other than 1 or 2) and no housing units, such as
-offices or a quarry, are moved to "תעשייה ומסחר".
+Category: from the tender type and land use in the authority's code tables
+(see segment()). Region, tender type and land use are named from the same
+tables. Housing units are published per tender; see units_attributed.
 
 Lots are kept when the source gives a positive winning amount. Lots without one
 are housing-lottery allocations (no price, no bids) or have no winner.
@@ -51,21 +53,50 @@ RAW = Path(sys.argv[1]) if len(sys.argv) > 1 else next(
     ROOT / "output" / "rmi_raw.json.gz")
 OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "dashboard" / "data.json"
 
-CATEGORY_HE = {
-    "mechir_lemishtaken": "מחיר למשתכן",
-    "yazamot": "יזמות",
-    # Fetched with land-use codes 4/6/7 on the assumption they meant hotels; the
-    # lots returned are in industrial and employment zones.
-    "malonaut": "תעשייה ומסחר",
-    "other": "אחר",
-}
-# KodMerchav, the Israel Land Authority region, named as in the authority's
-# reference list (remy-mcp reference_models.py). Codes outside it are shown
-# by number rather than guessed.
-REGION_HE = {1: 'יו"ש', 2: "דרום", 3: "חיפה", 4: "תל אביב", 5: "ירושלים", 6: "מרכז"}
-# Tender types that are subsidised-housing programmes (מחיר למשתכן / מחיר מטרה /
-# דיור במחיר מופחת) versus free-market tenders, by KodSugMichraz.
-PROGRAMME_TYPES = {2, 3}
+# Code tables published by the authority's tender site (api/GeneralTablesApi),
+# saved by the workflow to output/rmi_codes.json: 215 tender type, 66 region,
+# 318 land use, 291 bid description.
+CODES = ROOT / "output" / "rmi_codes.json"
+# Tender types that are subsidised-housing programmes: מחיר מטרה (5),
+# מחיר למשתכן (7), דיור במחיר מופחת (8).
+PROGRAMME_TYPES = {5, 7, 8}
+RENTAL_TYPE = 6
+AMIDAR_TYPE = 10
+RESIDENTIAL_USES = {1, 2, 3}
+BID_WIN, BID_DISQUALIFIED = 1, 3
+
+
+def load_codes():
+    tables = json.loads(CODES.read_text(encoding="utf-8"))["general_tables"]
+    out = {}
+    for row in tables:
+        out.setdefault(row["TableID"], {})[row["Code"]] = row["Value"].strip()
+    return out
+
+
+def segment(sug, yeud, units):
+    """Dashboard category, from the tender type and land use."""
+    if sug in PROGRAMME_TYPES:
+        return "מגורים · מחיר מטרה / למשתכן"
+    if sug == RENTAL_TYPE:
+        return "דיור להשכרה"
+    if sug == AMIDAR_TYPE:
+        return "נכסי עמידר"
+    if yeud in RESIDENTIAL_USES or units:
+        return "מגורים · שוק חופשי"
+    if yeud in (4, 5, 6, 7):
+        return "תעסוקה, אנרגיה וכרייה"
+    return "אחר"
+
+
+def market(sug):
+    if sug in PROGRAMME_TYPES:
+        return "מחיר מטרה / למשתכן"
+    if sug == RENTAL_TYPE:
+        return "דיור להשכרה"
+    return "שוק חופשי"
+
+
 STATUS_MARKERS = ("הצעות לא תקינות", "אין הצעות", "המציע זכה במתחם אחר",
                   "הצעות לא בטווח", "לא נתקבלו הצעות")
 
@@ -111,16 +142,15 @@ def place_name(code, hood, cities):
     return "יישוב לא מזוהה", False
 
 
-def build(raw, cities):
+def build(raw, cities, codes):
     lots = []
     dropped = {"unpriced": 0, "system": 0, "no_winner": 0}
     for key, body in raw["categories"].items():
         for entry in body["tenders"]:
             b, det = entry["basic"], entry["details"]
             hood = (b.get("Shchuna") or "").strip() or None
-            cat = CATEGORY_HE.get(key, key)
-            if key == "yazamot" and b.get("KodYeudMichraz") not in (1, 2) and not pos(b.get("YechidotDiur")):
-                cat = CATEGORY_HE["malonaut"]
+            sug, yeud = b.get("KodSugMichraz"), b.get("KodYeudMichraz")
+            cat = segment(sug, yeud, pos(b.get("YechidotDiur")))
             place, mapped = place_name(b.get("KodYeshuv"), hood, cities)
             for tik in det.get("Tik") or []:
                 winner = (tik.get("ShemZoche") or "").strip()
@@ -135,9 +165,11 @@ def build(raw, cities):
                     dropped["unpriced"] += 1
                     continue
                 raw_bids = [y for y in tik.get("mpHatzaaotMitcham") or [] if pos(y.get("HatzaaSum"))]
-                bid_rows = sorted(({"sum": y["HatzaaSum"], "win": y.get("HatzaaDescription") == 1}
+                bid_rows = sorted(({"sum": y["HatzaaSum"], "win": y.get("HatzaaDescription") == BID_WIN,
+                                    "dq": y.get("HatzaaDescription") == BID_DISQUALIFIED}
                                    for y in raw_bids), key=lambda r: -r["sum"])
-                sums = [r["sum"] for r in bid_rows]
+                # Disqualified bids are kept for display but do not compete on price.
+                sums = [r["sum"] for r in bid_rows if not r["dq"]]
                 others = list(sums)
                 if win in others:
                     others.remove(win)          # the winning bid itself
@@ -150,8 +182,10 @@ def build(raw, cities):
                 lots.append({
                     "id": f'{b.get("MichrazID")}-{tik.get("TikID")}',
                     "tender_id": b.get("MichrazID"),
-                    "region": REGION_HE.get(region, f"מרחב {region}" if region else None),
-                    "market": "מחיר למשתכן / מטרה" if b.get("KodSugMichraz") in PROGRAMME_TYPES else "שוק חופשי",
+                    "region": codes.get(66, {}).get(region, f"מרחב {region}" if region is not None else None),
+                    "market": market(sug),
+                    "tender_type": codes.get(215, {}).get(sug, f"סוג {sug}"),
+                    "land_use": codes.get(318, {}).get(yeud, f"ייעוד {yeud}" if yeud is not None else None),
                     "total_cost": win + dev if dev else win,
                     "tender": b.get("MichrazName"),
                     "url": f'https://apps.land.gov.il/MichrazimSite/#/michraz/{b.get("MichrazID")}',
@@ -174,6 +208,7 @@ def build(raw, cities):
                                       for g in tik.get("GushHelka") or []) or None,
                     "bids": bid_rows,
                     "bidders": len(bid_rows) or None,
+                    "disqualified": sum(1 for r in bid_rows if r["dq"]),
                     "win_rank": 1 + sum(1 for x in sums if x > win) if sums else None,
                     "vs_appraisal_pct": (win / appraisal - 1) * 100 if appraisal else None,
                     "premium_pct": (win / reserve - 1) * 100 if reserve else None,
@@ -233,7 +268,7 @@ def main():
     opener = gzip.open if RAW.suffix == ".gz" else open
     with opener(RAW, "rt", encoding="utf-8") as f:
         raw = json.load(f)
-    data = build(raw, load_city_names())
+    data = build(raw, load_city_names(), load_codes())
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     lots = data["lots"]
