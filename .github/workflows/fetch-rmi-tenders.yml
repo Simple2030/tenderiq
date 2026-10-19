@@ -110,7 +110,7 @@ jobs:
                   done += 1
                   if done % 25 == 0:
                       print(f"  {done}/{len(in_range)}", flush=True)
-                  time.sleep(0.4)
+                  time.sleep(0.2)
               out["categories"][name] = {"search_count": len(basics), "tenders": tenders}
               print(f"{name}: {len(tenders)} of {len(basics)} fetched", flush=True)
 
@@ -130,5 +130,10 @@ jobs:
             echo "nothing to commit"
           else
             git commit -m "ci: fetch RMI tenders $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            git push
+            # The branch may have moved during the run; rebase onto it.
+            for i in 1 2 3 4; do
+              git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0
+              sleep $((i * 5))
+            done
+            exit 1
           fi
