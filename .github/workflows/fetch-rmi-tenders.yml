@@ -14,6 +14,10 @@ on:
         description: "Committee date to (YYYY-MM-DD, empty = today)"
         required: false
         default: ""
+      retry_failed:
+        description: "Retry only the tenders listed as failed in output/rmi_raw.json.gz"
+        type: boolean
+        default: false
       codes_only:
         description: "Only save the site's code tables (output/rmi_codes.json)"
         type: boolean
@@ -33,7 +37,7 @@ jobs:
       - run: pip install requests
 
       - name: Fetch tenders from RMI
-        if: ${{ !inputs.codes_only }}
+        if: ${{ !inputs.codes_only && !inputs.retry_failed }}
         env:
           DATE_FROM: ${{ inputs.date_from }}
           DATE_TO: ${{ inputs.date_to }}
@@ -126,6 +130,47 @@ jobs:
                 f"{len(out['failed'])} failed", flush=True)
           PYEOF
 
+      - name: Retry failed tenders
+        if: ${{ inputs.retry_failed }}
+        run: |
+          python3 << 'PYEOF'
+          import gzip, json, time
+          import requests
+          BASE = "https://apps.land.gov.il/MichrazimSite/api"
+          S = requests.Session()
+          S.headers.update({"User-Agent": "datagov-external-client", "Content-Type": "application/json",
+                            "Accept": "application/json, text/plain, */*", "Origin": "https://apps.land.gov.il",
+                            "Referer": "https://apps.land.gov.il/MichrazimSite/"})
+          out = json.load(gzip.open("output/rmi_raw.json.gz", "rt", encoding="utf-8"))
+          ids = [f["MichrazID"] for f in out.get("failed", [])]
+          r = S.post(f"{BASE}/SearchApi/Search", json={"ActiveQuickSearch": False, "ActiveMichraz": False, "hasResults": True}, timeout=120)
+          data = r.json(); basics = {t["MichrazID"]: t for t in (data if isinstance(data, list) else data.get("results", []))}
+          still, got = [], 0
+          for mid in ids:
+              det, last = None, ""
+              for attempt in range(6):
+                  resp = S.get(f"{BASE}/MichrazDetailsApi/Get", params={"michrazID": mid}, timeout=60)
+                  last = f"{resp.status_code} {resp.text[:120]}"
+                  if resp.ok:
+                      det = resp.json(); break
+                  if resp.status_code == 404:
+                      break
+                  time.sleep(2 ** attempt)
+              b = basics.get(mid)
+              if det is None or b is None:
+                  still.append({"MichrazID": mid, "error": last if b else "not in search results"})
+                  print(mid, "still failing:", last, flush=True)
+              else:
+                  sug, yeud = b.get("KodSugMichraz"), b.get("KodYeudMichraz")
+                  key = ("malonaut" if yeud in (4, 6, 7) else "mechir_lemishtaken" if sug in (2, 3)
+                         else "yazamot" if sug == 1 else "other")
+                  out["categories"][key]["tenders"].append({"basic": b, "details": det}); got += 1
+              time.sleep(0.4)
+          out["failed"] = still
+          print(f"recovered {got} of {len(ids)}", flush=True)
+          with gzip.open("output/rmi_raw.json.gz", "wt", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+          PYEOF
       - name: Fetch code tables
         if: ${{ inputs.codes_only }}
         run: |
