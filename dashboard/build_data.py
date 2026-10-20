@@ -113,6 +113,44 @@ _BIZ = re.compile(
 MAX_AREA_FOR_PPSQM = 50_000  # larger lots are quarries or regional plots
 
 
+_PUNCT = re.compile(r'[\s.,"\'\-״׳`’‘“”()]+')
+_LEGAL = re.compile(r'בע\s*["\'״׳]*\s*[מם]\b|\bבעמ\b|\bבע\s*["\'״׳]*\s*$')
+
+
+def entity_key(name):
+    """Company identity across spellings: legal suffix, quotes and
+    punctuation removed ("רמי שבירו ... בע"מ" and "... בע''מ" and "..." match)."""
+    return _PUNCT.sub("", _LEGAL.sub("", _QUOTES.sub('"', name)))
+
+
+_FORM_ONLY = re.compile(r'^(שותפות מוגבלת|שותפות|ש\.?\s*מ\.?|בע\s*["\'״׳]*\s*[מם]|בעמ|\d+)$')
+
+
+# a part that continues the previous name ("אמנון חדד - יזום, השקעות ...")
+_CONTINUES = re.compile(r'^(השקעות|אגודה שיתופית|ושירותי|ניהול|ופיתוח|ובניה)')
+
+
+def partners_of(name):
+    """A joint bid lists its companies separated by commas. Split only when
+    at least two parts are company names, so a couple's names stay one
+    winner. The source cuts long names short, so a last fragment may be
+    partial; it is kept as published."""
+    parts = []
+    for p in (p.strip() for p in re.split(r"\s*,\s*", name)):
+        if not p:
+            continue
+        # a legal form after a comma belongs to the name before it
+        if p == "רשימת מציעים":
+            continue          # a placeholder the source adds, not a company
+        if parts and (_FORM_ONLY.match(p) or (_CONTINUES.match(p) and not _LEGAL.search(parts[-1]))):
+            parts[-1] += ", " + p
+        else:
+            parts.append(p)
+    if len(parts) > 1 and sum(1 for p in parts if is_company(p)) >= 2:
+        return parts
+    return [name.strip()]
+
+
 def is_company(name):
     n = _QUOTES.sub('"', name)
     return bool(_LTD.search(n) or _ORG.search(n) or _BIZ.search(n))
@@ -235,6 +273,18 @@ def build(raw, cities, codes):
         for i, lot in enumerate(group):
             lot["units_attributed"] = lot["tender_units"] if whole and i == 0 else None
             lot["units_partial"] = not whole and bool(lot["tender_units"])
+
+    # One display name per company: the spelling it is most often published under.
+    spell = {}
+    for lot in lots:
+        for p in partners_of(lot["winner"]):
+            spell.setdefault(entity_key(p), {}).setdefault(p, 0)
+            spell[entity_key(p)][p] += 1
+    canon = {k: max(v, key=v.get) for k, v in spell.items()}
+    for lot in lots:
+        parts = partners_of(lot["winner"])
+        lot["partners"] = [canon[entity_key(p)] for p in parts]
+        lot["joint"] = len(parts) > 1
 
     # Guard against the source repeating a lot within a tender: same lot, winner,
     # amount, appraisal, area, development costs and bid list. Keep the first, flag the rest so they

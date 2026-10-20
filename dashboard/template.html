@@ -189,7 +189,7 @@ a{color:var(--accent)}
   </section>
 
   <section class="card filters" aria-label="סינון">
-    <div class="field"><span>קטגוריה</span><div class="chips" id="f-cat"></div></div>
+    <div class="field"><span>קטגוריה · אפשר לבחור כמה</span><div class="chips" id="f-cat"></div></div>
     <div class="field"><span>סוג זוכה</span><div class="chips" id="f-kind"></div></div>
     <div class="field"><span>תקופה</span><div class="chips" id="f-period"></div></div>
     <div class="field"><label for="f-place">יישוב או אזור</label><select id="f-place"></select></div>
@@ -290,16 +290,19 @@ const PERIODS=[['all','כל התקופה'],['12','12 חודשים'],['6','6 חו
 const since=m=>{const d=new Date(M.date_to);d.setMonth(d.getMonth()-m);return d.toISOString().slice(0,10);};
 const inPeriod=r=>S.period==='all'||(r.date&&r.date>since(+S.period));
 const KINDS = [['חברה','חברות וקבוצות'],['פרטי','יחידים'],['הכל','הכל']];
-const S = {cat:'מגורים · שוק חופשי', kind:'חברה', period:'all', place:'', q:'', sort:'win', dir:-1, open:null};
+const S = {cats:new Set(['מגורים · שוק חופשי']), kind:'חברה', period:'all', place:'', q:'', sort:'win', dir:-1, open:null};
 
 function buildChips(el, items, key){
   el.innerHTML = items.map(it=>{const [v,l]=Array.isArray(it)?it:[it,it];return `<button type="button" class="chip" data-v="${esc(v)}">${esc(l)}</button>`;}).join('');
-  el.addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; S[key]=b.dataset.v; S.open=null; render(); });
+  el.addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; const v=b.dataset.v;
+    if(key==='cat'){ if(v==='הכל') S.cats.clear(); else if(S.cats.has(v)) S.cats.delete(v); else S.cats.add(v); }
+    else S[key]=v; S.open=null; render(); });
 }
-function syncChips(el,key){ el.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===S[key])); }
+function syncChips(el,key){ el.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed', key==='cat'?(b.dataset.v==='הכל'?!S.cats.size:S.cats.has(b.dataset.v)):b.dataset.v===S[key])); }
+const inCat = r => !S.cats.size||S.cats.has(r.cat);
 buildChips($('f-cat'),CATS,'cat'); buildChips($('f-kind'),KINDS,'kind'); buildChips($('f-period'),PERIODS,'period');
 function fillPlaces(){
-  const pool=L.filter(r=>(S.cat==='הכל'||r.cat===S.cat)&&(S.kind==='הכל'||r.kind===S.kind)&&inPeriod(r));
+  const pool=L.filter(r=>inCat(r)&&(S.kind==='הכל'||r.kind===S.kind)&&inPeriod(r));
   const places=[...new Set(pool.map(r=>r.place))].sort((a,b)=>a==='יישוב לא מזוהה'?1:b==='יישוב לא מזוהה'?-1:a.localeCompare(b,'he'));
   if(S.place&&!places.includes(S.place)) places.unshift(S.place);
   const html='<option value="">כל היישובים והאזורים</option>'+places.map(c=>`<option${c===S.place?' selected':''}>${esc(c)}</option>`).join('');
@@ -307,10 +310,11 @@ function fillPlaces(){
 }
 $('f-place').onchange=e=>{S.place=e.target.value;S.open=null;render();};
 $('f-q').oninput=e=>{S.q=e.target.value.trim();S.open=null;render();};
-$('reset').onclick=()=>{Object.assign(S,{cat:'הכל',kind:'הכל',period:'all',place:'',q:'',open:null});$('f-place').value='';$('f-q').value='';render();};
-$('tokens').onclick=e=>{const t=e.target.closest('.token');if(!t)return;const k=t.dataset.k;S[k]=(k==='cat'||k==='kind')?'הכל':k==='period'?'all':'';if(k==='place')$('f-place').value='';if(k==='q')$('f-q').value='';S.open=null;render();($('tokens').querySelector('.token')||$('f-q')).focus();};
+$('reset').onclick=()=>{S.cats.clear();Object.assign(S,{kind:'הכל',period:'all',place:'',q:'',open:null});$('f-place').value='';$('f-q').value='';render();};
+$('tokens').onclick=e=>{const t=e.target.closest('.token');if(!t)return;const k=t.dataset.k;if(k==='cat')S.cats.delete(t.dataset.v);else S[k]=k==='kind'?'הכל':k==='period'?'all':'';if(k==='place')$('f-place').value='';if(k==='q')$('f-q').value='';S.open=null;render();($('tokens').querySelector('.token')||$('f-q')).focus();};
 
-const rowsNow = () => L.filter(r=>(S.cat==='הכל'||r.cat===S.cat)&&(S.kind==='הכל'||r.kind===S.kind)&&inPeriod(r)&&(!S.place||r.place===S.place)&&(!S.q||r.winner.includes(S.q)||String(r.tender).includes(S.q)));
+const matchQ = r => !S.q||r.winner.includes(S.q)||(r.partners||[]).some(p=>p.includes(S.q))||String(r.tender).includes(S.q);
+const rowsNow = () => L.filter(r=>inCat(r)&&(S.kind==='הכל'||r.kind===S.kind)&&inPeriod(r)&&(!S.place||r.place===S.place)&&matchQ(r));
 
 function group(rows, key, val){const m=new Map();rows.forEach(r=>{const k=key(r);if(k==null)return;m.set(k,(m.get(k)||0)+val(r));});return [...m].sort((a,b)=>b[1]-a[1]);}
 function activate(el, onPick){
@@ -379,8 +383,8 @@ function renderTable(rows, focusSel){
 
 function render(){
   syncChips($('f-cat'),'cat'); syncChips($('f-kind'),'kind'); syncChips($('f-period'),'period'); fillPlaces();
-  const tok=[S.cat!=='הכל'&&['cat','קטגוריה',S.cat],S.kind!=='הכל'&&['kind','סוג זוכה',S.kind==='חברה'?'חברות וקבוצות':'יחידים'],S.period!=='all'&&['period','תקופה',`${S.period} חודשים אחרונים`],S.place&&['place','יישוב',S.place],S.q&&['q','חיפוש',S.q]].filter(Boolean);
-  $('tokens').innerHTML=tok.map(([k,l,v])=>`<button type="button" class="token" data-k="${k}" aria-label="הסרת סינון ${esc(l)}: ${esc(v)}">${esc(l)}: <b>${esc(v)}</b> ✕</button>`).join('');
+  const tok=[...[...S.cats].map(c=>['cat','קטגוריה',c]),S.kind!=='הכל'&&['kind','סוג זוכה',S.kind==='חברה'?'חברות וקבוצות':'יחידים'],S.period!=='all'&&['period','תקופה',`${S.period} חודשים אחרונים`],S.place&&['place','יישוב',S.place],S.q&&['q','חיפוש',S.q]].filter(Boolean);
+  $('tokens').innerHTML=tok.map(([k,l,v])=>`<button type="button" class="token" data-k="${k}" data-v="${esc(v)}" aria-label="הסרת סינון ${esc(l)}: ${esc(v)}">${esc(l)}: <b>${esc(v)}</b> ✕</button>`).join('');
 
   const all=rowsNow(), rows=all.filter(STAT);
   const wins=vals(rows,'win'), app=vals(rows,'vs_appraisal_pct'), gap=vals(rows,'gap_pct'), bidders=vals(rows,'bidders');
@@ -481,16 +485,17 @@ function render(){
   const end=new Date(M.date_to), start=new Date(end); start.setFullYear(end.getFullYear()-1);
   const sIso=start.toISOString().slice(0,10);
   // every category, so each winner's free-market and programme amounts sit side by side
-  const yr=L.filter(r=>STAT(r)&&(S.kind==='הכל'||r.kind===S.kind)&&(!S.place||r.place===S.place)&&(!S.q||r.winner.includes(S.q)||String(r.tender).includes(S.q))&&r.date&&r.date>sIso&&r.date<=M.date_to);
-  const dm=new Map(); yr.forEach(r=>{(dm.get(r.winner)||dm.set(r.winner,[]).get(r.winner)).push(r);});
+  const yr=L.filter(r=>STAT(r)&&(S.kind==='הכל'||r.kind===S.kind)&&(!S.place||r.place===S.place)&&matchQ(r)&&r.date&&r.date>sIso&&r.date<=M.date_to);
+  // one row per company: a joint bid is listed under each partner, in its own column and not in the solo totals
+  const dm=new Map(); yr.forEach(r=>(r.partners||[r.winner]).forEach(p=>{(dm.get(p)||dm.set(p,[]).get(p)).push(r);}));
   const sumBy=(g,f)=>g.reduce((s,r)=>s+(f(r)||0),0);
-  const devs=[...dm].map(([w,g])=>({w,g,lots:g.length,win:sumBy(g,r=>r.win),dev:sumBy(g,r=>r.dev),tot:sumBy(g,r=>r.total_cost),units:sumBy(g,r=>r.units_attributed),part:g.some(r=>r.units_partial),free:sumBy(g.filter(r=>r.market==='שוק חופשי'),r=>r.total_cost),prog:sumBy(g.filter(r=>r.market==='מחיר מטרה / למשתכן'),r=>r.total_cost),rent:sumBy(g.filter(r=>r.market==='דיור להשכרה'),r=>r.total_cost)})).sort((a,b)=>b.tot-a.tot);
+  const devs=[...dm].map(([w,all])=>{const g=all.filter(r=>!r.joint),j=all.filter(r=>r.joint);return {w,g:all,jl:j.length,jt:sumBy(j,r=>r.total_cost),lots:g.length,win:sumBy(g,r=>r.win),dev:sumBy(g,r=>r.dev),tot:sumBy(g,r=>r.total_cost),units:sumBy(g,r=>r.units_attributed),part:g.some(r=>r.units_partial),free:sumBy(g.filter(r=>r.market==='שוק חופשי'),r=>r.total_cost),prog:sumBy(g.filter(r=>r.market==='מחיר מטרה / למשתכן'),r=>r.total_cost),rent:sumBy(g.filter(r=>r.market==='דיור להשכרה'),r=>r.total_cost)};}).sort((a,b)=>b.tot+b.jt-a.tot-a.jt);
   const shownD=devs.slice(0,40);
-  $('dev-count').textContent=`${dmy(sIso)}–${dmy(M.date_to)} · ${nf.format(devs.length)} זוכים · ${nf.format(yr.length)} מגרשים · לחיצה מסננת לזוכה`;
-  $('t-devs').innerHTML=shownD.length?`<thead><tr><th>זוכה</th><th class="num">מגרשים</th><th class="num">זכייה</th><th class="num">הוצאות פיתוח</th><th class="num">סה״כ עם פיתוח</th><th class="num">שוק חופשי</th><th class="num">מחיר מטרה / למשתכן</th><th class="num">דיור להשכרה</th><th class="num">יחידות דיור</th></tr></thead><tbody>${shownD.map(d=>`<tr class="clickable" data-n="${esc(d.w)}" tabindex="0"><td>${esc(d.w)}<small>${esc([...new Set(d.g.map(r=>r.place))].slice(0,3).join(' · '))}</small></td><td class="num">${d.lots}</td><td class="num">${short(d.win)}</td><td class="num">${d.dev?short(d.dev):'—'}</td><td class="num"><b>${short(d.tot)}</b></td><td class="num">${d.free?short(d.free):'—'}</td><td class="num">${d.prog?short(d.prog):'—'}</td><td class="num">${d.rent?short(d.rent):'—'}</td><td class="num">${d.units?nf.format(d.units):d.part?'':'—'}${d.part?` <span class="part" title="במכרז עם זוכים נוספים או מגרשים שלא נמכרו; היחידות מפורסמות למכרז כולו ולא למגרש">${d.units?'+ ':''}חלקי</span>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">אין זכיות ב־12 החודשים האחרונים בסינון הזה.</td></tr></tbody>';
+  $('dev-count').textContent=`${dmy(sIso)}–${dmy(M.date_to)} · ${nf.format(devs.length)} חברות · ${nf.format(yr.length)} מגרשים · לחיצה מסננת לזוכה`;
+  $('t-devs').innerHTML=shownD.length?`<thead><tr><th>זוכה</th><th class="num">מגרשים</th><th class="num">זכייה</th><th class="num">הוצאות פיתוח</th><th class="num">סה״כ עם פיתוח</th><th class="num">שוק חופשי</th><th class="num">מחיר מטרה / למשתכן</th><th class="num">דיור להשכרה</th><th class="num">במשותף (סכום מלא)</th><th class="num">יחידות דיור</th></tr></thead><tbody>${shownD.map(d=>`<tr class="clickable" data-n="${esc(d.w)}" tabindex="0"><td>${esc(d.w)}<small>${esc([...new Set(d.g.map(r=>r.place))].slice(0,3).join(' · '))}</small></td><td class="num">${d.lots}${d.jl?` <small>+${d.jl} במשותף</small>`:''}</td><td class="num">${d.win?short(d.win):'—'}</td><td class="num">${d.dev?short(d.dev):'—'}</td><td class="num"><b>${d.tot?short(d.tot):'—'}</b></td><td class="num">${d.free?short(d.free):'—'}</td><td class="num">${d.prog?short(d.prog):'—'}</td><td class="num">${d.rent?short(d.rent):'—'}</td><td class="num">${d.jt?short(d.jt):'—'}</td><td class="num">${d.units?nf.format(d.units):d.part?'':'—'}${d.part?` <span class="part" title="במכרז עם זוכים נוספים או מגרשים שלא נמכרו; היחידות מפורסמות למכרז כולו ולא למגרש">${d.units?'+ ':''}חלקי</span>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">אין זכיות ב־12 החודשים האחרונים בסינון הזה.</td></tr></tbody>';
   activate($('t-devs'),pickWinner);
   const progYr=yr.filter(r=>r.market==='מחיר מטרה / למשתכן').length;
-  $('dev-n').innerHTML=`<b>סה״כ עם פיתוח</b>: סכום הזכייה ועוד הוצאות הפיתוח שפורסמו למגרש. <b>יחידות דיור</b> מפורסמות במקור למכרז כולו, לא למגרש: הן נספרות לזוכה רק כשזכה בכל המגרשים שהוצעו במכרז. "חלקי": זכה גם במכרזים שבהם היו זוכים נוספים או מגרשים שלא נמכרו, ושם היחידות לא מיוחסות. <b>מחיר מטרה / למשתכן</b>: לפי סוג המכרז ברמ״י (מחיר מטרה, מחיר למשתכן, דיור במחיר מופחת); כל השאר שוק חופשי, למעט דיור להשכרה${progYr?'':'. בסינון הזה אין מגרשים כאלה'}. הטבלה כוללת את כל הקטגוריות, ומושפעת רק מסוג הזוכה, מהיישוב ומהחיפוש.${devs.length>shownD.length?` מוצגים ${shownD.length} הזוכים הגדולים מתוך ${nf.format(devs.length)}.`:''}`;
+  $('dev-n').innerHTML=`<b>סה״כ עם פיתוח</b>: סכום הזכייה ועוד הוצאות הפיתוח שפורסמו למגרש. <b>יחידות דיור</b> מפורסמות במקור למכרז כולו, לא למגרש: הן נספרות לזוכה רק כשזכה בכל המגרשים שהוצעו במכרז. "חלקי": זכה גם במכרזים שבהם היו זוכים נוספים או מגרשים שלא נמכרו, ושם היחידות לא מיוחסות. <b>מחיר מטרה / למשתכן</b>: לפי סוג המכרז ברמ״י (מחיר מטרה, מחיר למשתכן, דיור במחיר מופחת); כל השאר שוק חופשי, למעט דיור להשכרה${progYr?'':'. בסינון הזה אין מגרשים כאלה'}. <b>במשותף</b>: מגרשים שהיזם זכה בהם יחד עם חברות אחרות. המקור לא מפרסם את חלקו של כל שותף, ולכן הסכום המלא מוצג בעמודה נפרדת ולא נכלל בסה״כ שלו. שמות שנבדלים רק בכתיב (בע״מ, פיסוק) אוחדו לחברה אחת. הטבלה כוללת את כל הקטגוריות, ומושפעת רק מסוג הזוכה, מהיישוב ומהחיפוש.${devs.length>shownD.length?` מוצגים ${shownD.length} הזוכים הגדולים מתוך ${nf.format(devs.length)}.`:''}`;
 
   renderTable(all);
 }
