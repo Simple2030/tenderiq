@@ -1,0 +1,804 @@
+<title>מפת רכישות יזמים</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Heebo:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+/* Shell: navy brand band holding the header, ivory workspace, tokens for both themes.
+   The page below is written against these token names, so it runs the same here and in the Dashboard version. */
+:root{
+  --font-anthropic-serif:"Frank Ruhl Libre","David Libre",Georgia,serif;
+  --font-anthropic-sans:"Heebo","Segoe UI",Arial,sans-serif;
+  --frame:#0A1A3F; --frame2:#12306E; --on-frame:#FFFFFF; --on-frame2:#C9D6FF;
+  --color-bg:#FBFAF6; --color-panel:#FFFFFF; --color-fg:#17213A; --color-fg-muted:#5E677B; --color-border-line:#E7E3D9;
+  --color-ok:#17714F; --color-warn:#9A6700; --color-bad:#B23A48;
+  --cds-chart-grid:#EFECE4; --cds-chart-axis:#B9B4A8; --cds-chart-reference:#8C8677; --cds-chart-muted:#C9C5BB; --cds-chart-status-critical:#C23B4B;
+  --cds-surface-popover:#FFFFFF; --cds-border:#E1DDD2; --cds-shadow-popover:0 6px 24px rgba(10,26,63,.12); --cds-text-secondary:#5E677B;
+  --s1:#1F4FB4; --s2:#0F8B8D; --s3:#C47A10; --s4:#8B4BA8; --s5:#2F8F4E; --s6:#C4513F; --s7:#4F6687; --s8:#9C7A3C;
+  --cds-font-size-caption:12px; --cds-font-size-body:14px; --cds-font-size-heading:17px; --cds-font-size-title:30px; --cds-font-weight-medium:600;
+  --cds-gap-xs:4px; --cds-gap-sm:8px; --cds-gap-md:14px; --cds-gap-lg:22px; --cds-gap-xl:34px;
+  --cds-pad-xs:6px; --cds-pad-sm:10px; --cds-pad-md:14px; --cds-pad-lg:20px; --cds-radius:6px; --cds-dur-slow:.3s;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --color-bg:#0D1324; --color-panel:#141C31; --color-fg:#E8ECF6; --color-fg-muted:#9BA6BF; --color-border-line:#26304B;
+  --color-ok:#52C08E; --color-warn:#E3B04F; --color-bad:#EA7A86;
+  --cds-chart-grid:#1E2740; --cds-chart-axis:#46506B; --cds-chart-reference:#7F89A3; --cds-chart-muted:#3A4462; --cds-chart-status-critical:#EF6B79;
+  --cds-surface-popover:#18213A; --cds-border:#2C3756; --cds-shadow-popover:0 8px 28px rgba(0,0,0,.45); --cds-text-secondary:#9BA6BF;
+  --s1:#7EA2FF; --s2:#4CC9C4; --s3:#EFAE4E; --s4:#C58BE0; --s5:#6CCB86; --s6:#F08A78; --s7:#A2B3D1; --s8:#D6B36F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --color-bg:#0D1324; --color-panel:#141C31; --color-fg:#E8ECF6; --color-fg-muted:#9BA6BF; --color-border-line:#26304B;
+  --color-ok:#52C08E; --color-warn:#E3B04F; --color-bad:#EA7A86;
+  --cds-chart-grid:#1E2740; --cds-chart-axis:#46506B; --cds-chart-reference:#7F89A3; --cds-chart-muted:#3A4462; --cds-chart-status-critical:#EF6B79;
+  --cds-surface-popover:#18213A; --cds-border:#2C3756; --cds-shadow-popover:0 8px 28px rgba(0,0,0,.45); --cds-text-secondary:#9BA6BF;
+  --s1:#7EA2FF; --s2:#4CC9C4; --s3:#EFAE4E; --s4:#C58BE0; --s5:#6CCB86; --s6:#F08A78; --s7:#A2B3D1; --s8:#D6B36F; color-scheme:dark}
+html,body{background:var(--color-bg)}
+body{margin:0;color:var(--color-fg);font-family:var(--font-anthropic-sans);-webkit-font-smoothing:antialiased}
+#dash-root{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+/* brand band: the header sits on navy, full bleed */
+.dv > header{background:linear-gradient(100deg,var(--frame),var(--frame2));color:var(--on-frame);margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:28px max(16px,env(safe-area-inset-left,0px)) 22px;border-bottom:1px solid #2C3A78}
+.dv > header > *{max-width:1280px;margin-inline:auto}
+.dv > header h1{color:#fff;font-size:34px;letter-spacing:-.01em}
+.dv > header .sub{color:var(--on-frame2)}
+.dv > header .take{color:#E7ECFA;font-size:15px}
+.dv > header .take b{color:#fff}
+.dv > header .chip{background:transparent;color:#E7ECFA;border-color:#ffffff38}
+.dv > header .chip[aria-pressed="true"]{background:#fff;color:var(--frame);border-color:#fff;box-shadow:none}
+.dv > header .nav button{color:var(--on-frame2)}
+.dv > header .nav button:hover{color:#fff;border-bottom-color:#fff}
+.dv .kpi .v{font-size:32px;line-height:1.15}
+.dv h2{font-family:var(--font-anthropic-serif);font-weight:500;font-size:22px}
+.dv .card,.dv .kpi,.dv .tcard{box-shadow:0 1px 0 rgba(10,26,63,.03)}
+.brandfoot{max-width:1280px;margin:28px auto 0;font-size:12px;color:var(--color-fg-muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+</style>
+
+<style>
+/* Question: who among the leading developers buys land with discipline, and who pays up for it.
+   Layout: header (takeaway, focus chips, nav) → 6 tiles → pricing map → composite ranking → domain sections → strategic read → tender terms cards → all-data explorer → method */
+#dash-root{--dash-gutter:clamp(12px,3vw,32px)}
+.dv{direction:rtl;font-family:var(--font-anthropic-sans);color:var(--color-fg);display:grid;gap:var(--cds-gap-xl);max-width:1280px;margin-inline:auto}
+.dv h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+.dv h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.dv h3{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);margin:0}
+.dv .sub{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:2px 0 0}
+.dv .note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:2px 0 8px;max-width:80ch;line-height:1.5}
+.dv .lede{font-size:var(--cds-font-size-body);color:var(--color-fg-muted);margin:0;max-width:90ch;line-height:1.6}
+.dv .take{font-size:var(--cds-font-size-body);margin:10px 0 0;max-width:95ch;line-height:1.7}
+.dv .take b,.dv .ins b,.dv .tcard b{font-weight:600}
+.dv .sec{display:grid;gap:var(--cds-gap-md)}
+.dv .sechead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.dv .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.dv .chip{font:inherit;font-size:var(--cds-font-size-caption);padding:5px 12px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.dv .chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dv .chip[aria-pressed="true"]{border-color:var(--color-fg);box-shadow:inset 0 0 0 1px var(--color-fg)}
+.dv button:focus-visible,.dv tr:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+.dv .nav{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:10px;font-size:var(--cds-font-size-caption)}
+.dv .nav button{all:unset;cursor:pointer;color:var(--color-fg-muted);border-bottom:1px solid transparent}
+.dv .nav button:hover{color:var(--color-fg);border-bottom-color:var(--color-fg)}
+.dv .card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);min-width:0;position:relative}
+.dv .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.dv .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr));gap:var(--cds-gap-md)}
+.dv .kpi{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-md) var(--cds-pad-lg);display:grid;gap:2px;align-content:start;min-width:0}
+.dv .kpi label{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.dv .kpi .v{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dv .kpi .v small{font-family:var(--font-anthropic-sans);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.dv .kpi .d{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.dv .good{color:var(--color-ok)} .dv .bad{color:var(--color-bad)}
+.dv .chart{min-height:180px;width:100%}
+.dv .chart svg{display:block;direction:ltr}
+.dv .chart text{font-family:var(--font-anthropic-sans);font-size:11px;fill:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.dv .chart text.lab{fill:var(--color-fg);font-size:12px}
+.dv .chart text.quad{font-style:italic;fill:var(--color-fg-muted);font-size:11px}
+.dv .tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);line-height:1.55;max-width:260px;z-index:5}
+.dv .tip .t{color:var(--cds-text-secondary)}
+.dv .tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-inline-end:5px}
+.dv .legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:6px}
+.dv .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:5px;vertical-align:-1px}
+.dv .tw{overflow-x:auto;max-height:520px;overflow-y:auto}
+.dv table{width:100%;border-collapse:collapse;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.dv th{position:sticky;top:0;background:var(--color-panel);text-align:right;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);padding:6px 8px;border-bottom:1px solid var(--color-border-line);white-space:nowrap;z-index:1}
+.dv td{padding:7px 8px;border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.dv td.n,.dv th.n{text-align:left}
+.dv tbody tr{cursor:pointer}
+.dv tr.dim td{opacity:.45}
+.dv tr.hi td{font-weight:600}
+.dv td.rk{text-align:center;font-family:var(--font-anthropic-serif);font-size:var(--cds-font-size-heading)}
+.dv td .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:6px}
+.dv .ins{display:grid;gap:10px;list-style:none;margin:0;padding:0}
+.dv .ins li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--color-border-line)}
+.dv .pill{font-size:11px;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--color-border-line);color:var(--color-fg-muted)}
+.dv .pill.bad{border-color:color-mix(in srgb,var(--color-bad) 45%,transparent);color:var(--color-bad);background:color-mix(in srgb,var(--color-bad) 8%,transparent)}
+.dv .pill.warn{border-color:color-mix(in srgb,var(--color-warn) 45%,transparent);color:var(--color-warn);background:color-mix(in srgb,var(--color-warn) 8%,transparent)}
+.dv .pill.ok{border-color:color-mix(in srgb,var(--color-ok) 45%,transparent);color:var(--color-ok);background:color-mix(in srgb,var(--color-ok) 8%,transparent)}
+.dv .ins .x{font-size:var(--cds-font-size-body);line-height:1.6}
+.dv .ins .so{display:block;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.dv .tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:var(--cds-gap-md)}
+.dv .tcard{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-md) var(--cds-pad-lg);display:grid;gap:6px;min-width:0;align-content:start;cursor:pointer}
+.dv .tcard h3{display:flex;align-items:center;gap:8px}
+.dv .tcard h3 i{width:10px;height:10px;border-radius:50%}
+.dv .tcard dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:var(--cds-font-size-caption)}
+.dv .tcard dt{color:var(--color-fg-muted)}
+.dv .tcard dd{margin:0;font-variant-numeric:tabular-nums}
+.dv .tcard ul{margin:4px 0 0;padding:0;list-style:none;font-size:var(--cds-font-size-caption);display:grid;gap:2px}
+.dv .tcard li{display:flex;justify-content:space-between;gap:8px}
+.dv .tcard li span:last-child{color:var(--color-fg-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dv .tcard.dim{opacity:.45}
+.dv select{font:inherit;font-size:var(--cds-font-size-body);padding:6px 10px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:var(--cds-radius);max-width:100%}
+.dv .mine{font-size:11px;border:1px dashed var(--color-warn);color:var(--color-warn);padding:1px 8px;border-radius:999px;white-space:nowrap}
+.dv .method{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);display:grid;gap:6px}
+.dv .method p{margin:0;max-width:110ch;line-height:1.6}
+.dv .method b{color:var(--color-fg)}
+.dv a{color:inherit}
+.dv [data-dash-source-state=empty]{color:transparent}
+.dv [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+.dv .fail{display:flex;align-items:center;justify-content:center;gap:6px;min-height:120px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.dv .fail::before{content:"";width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad)}
+</style>
+<div id="dash-root">
+<div class="dv" id="top">
+  <header id="head">
+    <h1>מי קונה קרקע במשמעת, ומי משלם ביוקר</h1>
+    <p class="sub" id="scope" data-source="lots">—</p>
+    <p class="take dash-skeleton" id="takeaway" data-source="by_dev_period ranking">—</p>
+    <div class="chips" id="focus" role="group" aria-label="מיקוד ביזם" data-source="by_dev_period"></div>
+    <nav class="nav" id="nav" aria-label="ניווט"></nav>
+  </header>
+
+  <section class="sec" id="snapshot" aria-labelledby="snap-h">
+    <div class="sechead"><h2 id="snap-h">תמונת מצב</h2><span class="sub" id="snap-sub"></span></div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section class="card sec" id="map" aria-labelledby="map-h">
+    <div><h2 id="map-h">מפת תמחור</h2>
+    <p class="note">12 החודשים האחרונים. ציר אופקי: חציון הזכייה מול שומת המגרש (ימינה: מעל השומה). ציר אנכי: חציון הפער מההצעה התקינה השנייה, הכסף שנשאר על השולחן. גודל העיגול: זכיות כולל הוצאות פיתוח. החץ יוצא מהמיקום ב־12 החודשים שלפני. קו אדום: השומה. קווים מקווקווים: חציון היזמים. רבעים: שמאל־למטה משמעת, ימין־למעלה לחץ.</p></div>
+    <div class="chart" id="map-chart" data-source="by_dev_period" style="min-height:400px"></div>
+    <p class="note" id="map-missing"></p>
+  </section>
+
+  <section class="card sec" id="rank" aria-labelledby="rank-h">
+    <div class="sechead"><h2 id="rank-h">דירוג עוצמת רכישה</h2><span class="mine">שקלול שלי, לא מדד מקובל</span></div>
+    <p class="note">כל התקופה. בכל מדד מקום 1 הוא הטוב לרוכש: היקף, מספר מגרשים ופריסה גבוהים; מחיר נמוך מול השומה; פער קטן מההצעה השנייה; ויותר מתחרים במגרשים שבהם זכה. הציון: ממוצע הדירוגים במשקל שווה. ירוק: שני הראשונים במדד; אדום: שני האחרונים. לחיצה על שורה ממקדת.</p>
+    <div class="tw"><table id="rank-table" data-source="ranking" data-row-key="developer"><thead><tr>
+      <th data-field="final_rank">מקום</th><th data-field="developer">יזם</th>
+      <th data-field="rank_total_m" class="n">היקף</th><th data-field="rank_lots" class="n">מגרשים</th><th data-field="rank_places" class="n">יישובים</th>
+      <th data-field="rank_med_vs_app" class="n">מול שומה</th><th data-field="rank_med_gap" class="n">פער מהשנייה</th><th data-field="rank_med_bids" class="n">מתחרים</th>
+      <th data-field="avg_rank" class="n">ממוצע</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="sec" id="scale" aria-labelledby="scale-h">
+    <h2 id="scale-h">היקף ותמהיל</h2>
+    <p class="lede">ההיקף קובע את משקל היזם בשוק הקרקע, והתמהיל קובע על איזה ביקוש הוא נשען: שוק חופשי מתומחר לפי הקונים, מחיר מטרה לפי המדינה.</p>
+    <div class="grid">
+      <div class="card"><h3>זכיות לפי תקופה</h3><p class="note">מיליוני ₪ כולל הוצאות פיתוח. התווית: 12 החודשים האחרונים · השינוי מהשנה שלפני. התקופה הראשונה חלקית.</p><div class="legend" id="leg-win"></div><div class="chart" id="c-win" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>שוק חופשי מול מחיר מטרה ודיור להשכרה</h3><p class="note">מיליוני ₪ כולל פיתוח, כל התקופה. התווית: סך · חלק מחיר מטרה.</p><div class="legend" id="leg-mix"></div><div class="chart" id="c-mix" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>חלק הוצאות הפיתוח בעלות הקרקע</h3><p class="note">הוצאות פיתוח חלקי סכום הזכייה ועוד הפיתוח, כל התקופה. קו: כל היזמים יחד.</p><div class="chart" id="c-devshare" data-source="by_dev_period"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="price" aria-labelledby="price-h">
+    <h2 id="price-h">מחיר ומשמעת</h2>
+    <p class="lede">שומת רמ״י היא העוגן. יזם שזוכה הרבה מתחת לשומה קונה בזול; יזם שמתקרב אליה או עובר אותה מתמחר עתיד אופטימי ומקטין את המרווח שלו.</p>
+    <div class="grid">
+      <div class="card"><h3>זכייה מול שומה לאורך זמן</h3><p class="note">חציון לכל תקופה. קו אדום: השומה. התווית: 12 החודשים האחרונים · השינוי בנקודות.</p><div class="legend" id="leg-vs"></div><div class="chart" id="c-vsapp" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>מחיר קרקע ליחידת דיור</h3><p class="note">סכום הזכייה ועוד פיתוח, חלקי יחידות הדיור, רק במכרזים שבהם היזם זכה בכל המגרשים. אלפי ₪ ליח״ד, כל התקופה.</p><div class="chart" id="c-unit" data-source="by_dev_period"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="comp" aria-labelledby="comp-h">
+    <h2 id="comp-h">תחרות וכסף על השולחן</h2>
+    <p class="lede">הפער מההצעה השנייה הוא כסף ששולם בלי צורך. פער קבוע וגדול מעיד על תמחור לפי הצורך של היזם, לא לפי השוק; זכיות בהצעה יחידה מעידות על בחירת מגרשים שאחרים לא רצו.</p>
+    <div class="grid">
+      <div class="card"><h3>חציון הפער מההצעה השנייה</h3><p class="note">אחוזים. קו: חציון כל היזמים ב־12 החודשים האחרונים. התווית: 12 החודשים האחרונים · כסף על השולחן במיליוני ₪.</p><div class="legend" id="leg-gap"></div><div class="chart" id="c-gap" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>זכיות בהצעה יחידה</h3><p class="note">מגרשים עם הצעה תקינה אחת בלבד, כל התקופה. התווית: מספר · חלק ממגרשי היזם.</p><div class="chart" id="c-single" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>חציון המתחרים במגרשים שנזכו</h3><p class="note">הצעות תקינות למגרש, כל התקופה. יותר מתחרים: זכייה בשוק מבוקש.</p><div class="chart" id="c-bids" data-source="by_dev_period"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="insights" aria-labelledby="ins-h">
+    <h2 id="ins-h">קריאה אסטרטגית</h2>
+    <ul class="ins card" id="ins-list" data-source="insights"></ul>
+  </section>
+
+  <section class="sec" id="terms" aria-labelledby="terms-h">
+    <div class="sechead"><h2 id="terms-h">תנאי המכרזים שבהם זכה כל יזם</h2></div>
+    <p class="lede">כפי שפורסמו ברמ״י: סוגי המכרז, מחיר הסף מול השומה, מגבלת המגרשים למציע, והמכרזים הגדולים. לחיצה על כרטיס ממקדת.</p>
+    <div class="tcards" id="tcards" data-source="terms_by_dev"></div>
+  </section>
+
+  <section class="card sec" id="all" aria-labelledby="all-h">
+    <h2 id="all-h">כל הנתונים</h2>
+    <label class="note" for="metric">כל מדד בנתונים, לפי תחום: גרף שלוש תקופות, מהמוקדמת לאחרונה וטבלה עם השינוי בין 12 החודשים האחרונים לקודמים.</label>
+    <select id="metric"></select>
+    <div class="chart" id="c-all" data-source="by_dev_period" style="min-height:280px"></div>
+    <div class="tw"><table id="all-table" data-source="wide" data-row-key="key"><thead><tr>
+      <th data-field="developer">יזם</th><th data-field="P1" class="n">04–10/2024 (חלקי)</th><th data-field="P2" class="n">10/2024–10/2025</th><th data-field="P3" class="n">10/2025–10/2026</th><th data-field="chg" class="n">שינוי</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="card method" id="method" aria-labelledby="method-h">
+    <h2 id="method-h">שיטה ומקורות</h2>
+    <p><b>השאלה:</b> מי מבין היזמים המובילים קונה קרקע במשמעת מחיר, ומי משלם ביוקר. כל המספרים, התוויות והתובנות מחושבים בקוד מנתוני המגרשים.</p>
+    <p><b>מקור:</b> רשות מקרקעי ישראל, API אתר המכרזים: כל המכרזים עם תוצאות שוועדתם התכנסה מ־1.4.2024 עד 19.10.2026, נשלפו ב־19.10.2026. שמות המרחבים וסוגי המכרז לפי טבלאות הקודים של רמ״י. הסכומים פורסמו בשקלים והומרו פעם אחת למיליוני ₪; נומינליים, ללא הצמדה. אין במקור הצגה מחדש.</p>
+    <p><b>היזמים:</b> שבע החברות עם סכום הזכיות הגבוה ביותר כולל הוצאות פיתוח, מבין אלה שזכו גם ב־12 החודשים האחרונים וגם ב־12 שלפניהם. שמות שנבדלים רק בכתיב (בע״מ, פיסוק) אוחדו לחברה אחת. יזם שזכה רק בתקופה אחת, כמו גינדי, לא נכלל. הצבע של כל יזם קבוע בכל הגרפים, לפי סדר ההיקף.</p>
+    <p><b>זכיות במשותף:</b> כשכמה חברות זוכות יחד, המקור לא מפרסם את חלקה של כל אחת. לכן הסכומים, ההיקף והדירוג כוללים רק זכיות לבד, וזכיות במשותף מוצגות בסכום המלא כמדד נפרד ("כל הנתונים"). בחציונים (מול שומה, פער, מתחרים) נכללים גם מגרשים במשותף, כי הם משקפים הצעה שהחברה הייתה שותפה לה.</p>
+    <p><b>כיסוי:</b> כל <span id="m-cov"></span> המכרזים עם תוצאות בטווח נשלפו במלואם. זכיות שלפני 1.4.2024 לא בטווח.</p>
+    <p><b>תקופות:</b> 12 החודשים האחרונים (20.10.2025–19.10.2026), 12 החודשים שלפניהם, ותקופה ראשונה חלקית (1.4.2024–19.10.2024). "מול השנה הקודמת" משווה את שתי התקופות המלאות.</p>
+    <p><b>הגדרות:</b> זכייה מול שומה = סכום הזכייה חלקי שומת המגרש, פחות 1. פער מההצעה השנייה = הזכייה חלקי ההצעה התקינה הבאה שאינה גבוהה ממנה, פחות 1; הצעות שרמ״י סימנה כפסולות לא נספרות. כסף על השולחן = סכום הזכייה פחות ההצעה השנייה. יחידות דיור מפורסמות למכרז כולו ונספרות ליזם רק כשזכה בכל המגרשים שהוצעו בו; מחיר ליח״ד מחושב רק ממכרזים כאלה.</p>
+    <p><b>שקלול שלי:</b> דירוג עוצמת הרכישה, ובחירת כיוון "טוב" בכל מדד, הם שלי ולא מדד מקובל בשוק. גם ספי התובנות (השומה כקו אדום, ריכוז מעל חצי מההיקף במכרז אחד) הם הבחירה שלי.</p>
+    <p><b>נתונים חסרים:</b> במגרש בלי הצעה שנייה תקינה אין פער; במגרש בלי שומה אין יחס לשומה; במכרז עם זוכים נוספים אין יחידות ליזם. הם לא נכללים בחציון ומוצגים "אין נתון".</p>
+    <p><b>בדיקות:</b> הסכומים, החציונים וכסף על השולחן חושבו מחדש ישירות מקובץ המקור והתאימו. כל הצעה שסומנה כזוכה שווה בדיוק לסכום הזכייה שפורסם.</p>
+    <p><b>במקום מה:</b> המבנה לקוח מדשבורד השוואה פיננסי (חוב, EBITDA, כיסוי ריבית); קובץ ההשוואה לא צורף, ולכן הוחל על נתוני המכרזים: מפת סיכון → מפת תמחור, דירוג חוסן → דירוג עוצמת רכישה, תנאי מימון → תנאי המכרזים.</p>
+  </section>
+</div>
+<footer class="brandfoot"><span>רביד לירז · אסטרטגיה וכלכלת נדל״ן</span><span>נתונים: רשות מקרקעי ישראל, API אתר המכרזים</span></footer>
+</div>
+<script>window.EMBED = {"lots": [{"developer": "אסיה סיירוס", "joint": false, "partners": "אסיה סיירוס", "period": "P1", "date": "2024-05-28", "tender": "199/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 80.1572, "dev_m": 36.4902, "total_m": 116.6474, "appraisal_m": 99.2404, "vs_appraisal_pct": -19.23, "runner_up_m": 77.0025, "gap_pct": 4.1, "bids": 21, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230199"}, {"developer": "אסיה סיירוס", "joint": false, "partners": "אסיה סיירוס", "period": "P2", "date": "2024-12-23", "tender": "146/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "באר יעקב", "win_m": 95.5758, "dev_m": 34.8459, "total_m": 130.4217, "appraisal_m": 95.3868, "vs_appraisal_pct": 0.2, "runner_up_m": 86.7752, "gap_pct": 10.14, "bids": 13, "units": null, "reserve_of_appraisal_pct": 2.9756, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240146"}, {"developer": "אסיה סיירוס", "joint": false, "partners": "אסיה סיירוס", "period": "P2", "date": "2024-12-23", "tender": "366/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "יהוד-מונוסון", "win_m": 140.5758, "dev_m": 19.7313, "total_m": 160.307, "appraisal_m": 132.3476, "vs_appraisal_pct": 6.22, "runner_up_m": 130.24, "gap_pct": 7.94, "bids": 6, "units": 148, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240366"}, {"developer": "אסיה סיירוס", "joint": false, "partners": "אסיה סיירוס", "period": "P2", "date": "2024-12-30", "tender": "96/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "יבנה", "win_m": 40.5756, "dev_m": 68.8515, "total_m": 109.4271, "appraisal_m": 150.2712, "vs_appraisal_pct": -73.0, "runner_up_m": 30.7556, "gap_pct": 31.93, "bids": 11, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240096"}, {"developer": "אסיה סיירוס", "joint": false, "partners": "אסיה סיירוס", "period": "P3", "date": "2025-12-31", "tender": "383/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "מזכרת בתיה", "win_m": 70.5556, "dev_m": 3.2837, "total_m": 73.8392, "appraisal_m": 57.8464, "vs_appraisal_pct": 21.97, "runner_up_m": 67.5556, "gap_pct": 4.44, "bids": 37, "units": null, "reserve_of_appraisal_pct": 1.3596, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250383"}, {"developer": "אסיה סיירוס", "joint": false, "partners": "אסיה סיירוס", "period": "P3", "date": "2026-01-26", "tender": "35/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "לוד", "win_m": 118.5558, "dev_m": 64.0585, "total_m": 182.6143, "appraisal_m": 266.0657, "vs_appraisal_pct": -55.44, "runner_up_m": 112.728, "gap_pct": 5.17, "bids": 8, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240035"}, {"developer": "אסיה סיירוס", "joint": false, "partners": "אסיה סיירוס", "period": "P3", "date": "2026-03-23", "tender": "472/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "רחובות", "win_m": 105.3556, "dev_m": 51.2068, "total_m": 156.5624, "appraisal_m": 91.8083, "vs_appraisal_pct": 14.76, "runner_up_m": 76.8789, "gap_pct": 37.04, "bids": 19, "units": null, "reserve_of_appraisal_pct": 2.9907, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240472"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P1", "date": "2024-05-20", "tender": "45/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "צור הדסה", "win_m": 2.6733, "dev_m": 34.026, "total_m": 36.6993, "appraisal_m": 23.261, "vs_appraisal_pct": -88.51, "runner_up_m": 1.21, "gap_pct": 120.94, "bids": 2, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240045"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P1", "date": "2024-05-20", "tender": "45/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "צור הדסה", "win_m": 1.6383, "dev_m": 27.9202, "total_m": 29.5586, "appraisal_m": 19.6513, "vs_appraisal_pct": -91.66, "runner_up_m": 0.43, "gap_pct": 281.01, "bids": 2, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240045"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P1", "date": "2024-06-30", "tender": "67/2023", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "נס ציונה", "win_m": 177.5103, "dev_m": 21.4694, "total_m": 198.9797, "appraisal_m": 181.0736, "vs_appraisal_pct": -1.97, "runner_up_m": 158.6002, "gap_pct": 11.92, "bids": 56, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230067"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P2", "date": "2024-12-23", "tender": "146/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "באר יעקב", "win_m": 86.9552, "dev_m": 35.7238, "total_m": 122.6789, "appraisal_m": 94.7629, "vs_appraisal_pct": -8.24, "runner_up_m": 83.8011, "gap_pct": 3.76, "bids": 11, "units": null, "reserve_of_appraisal_pct": 2.5647, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240146"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P2", "date": "2025-03-03", "tender": "5/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "ראשון לציון", "win_m": 80.1802, "dev_m": 1.517, "total_m": 81.6972, "appraisal_m": 129.422, "vs_appraisal_pct": -38.05, "runner_up_m": 74.5558, "gap_pct": 7.54, "bids": 9, "units": 57, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250005"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P3", "date": "2025-11-11", "tender": "375/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "בית דגן", "win_m": 86.4905, "dev_m": 23.1792, "total_m": 109.6697, "appraisal_m": 99.7028, "vs_appraisal_pct": -13.25, "runner_up_m": 82.555, "gap_pct": 4.77, "bids": 30, "units": null, "reserve_of_appraisal_pct": 2.6037, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250375"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P3", "date": "2025-12-29", "tender": "441/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 25.7405, "dev_m": 37.8511, "total_m": 63.5916, "appraisal_m": 87.6001, "vs_appraisal_pct": -70.62, "runner_up_m": 18.7708, "gap_pct": 37.13, "bids": 5, "units": null, "reserve_of_appraisal_pct": 3.5449, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250441"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P3", "date": "2025-12-31", "tender": "209/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "תל אביב", "place": "הרצליה", "win_m": 144.5845, "dev_m": 12.625, "total_m": 157.2095, "appraisal_m": 140.5752, "vs_appraisal_pct": 2.85, "runner_up_m": 138.8888, "gap_pct": 4.1, "bids": 24, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 8, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250209"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P3", "date": "2026-01-12", "tender": "458/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "ירושלים", "place": "פארק תעשייה דרומי", "win_m": 8.1795, "dev_m": 0.0, "total_m": 8.1795, "appraisal_m": 11.9755, "vs_appraisal_pct": -31.7, "runner_up_m": 7.0818, "gap_pct": 15.5, "bids": 8, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250458"}, {"developer": "גיא & דורון לוי", "joint": false, "partners": "גיא & דורון לוי", "period": "P3", "date": "2026-01-12", "tender": "458/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "ירושלים", "place": "פארק תעשייה דרומי", "win_m": 7.8995, "dev_m": 0.0, "total_m": 7.8995, "appraisal_m": 11.555, "vs_appraisal_pct": -31.64, "runner_up_m": 7.0018, "gap_pct": 12.82, "bids": 8, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250458"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P1", "date": "2024-04-09", "tender": "14/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "קרית גת", "win_m": 22.7264, "dev_m": 38.8156, "total_m": 61.542, "appraisal_m": 128.0941, "vs_appraisal_pct": -82.26, "runner_up_m": 20.0056, "gap_pct": 13.6, "bids": 10, "units": 263, "reserve_of_appraisal_pct": 0.9574, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240014"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2024-12-30", "tender": "333/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "באר שבע", "win_m": 11.7, "dev_m": 51.1898, "total_m": 62.8898, "appraisal_m": 20.093, "vs_appraisal_pct": -41.77, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": null, "reserve_of_appraisal_pct": 17.85, "max_lots_per_bidder": 4, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240333"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2024-12-30", "tender": "333/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "באר שבע", "win_m": 6.48, "dev_m": 41.2185, "total_m": 47.6985, "appraisal_m": 10.3508, "vs_appraisal_pct": -37.4, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": null, "reserve_of_appraisal_pct": 17.85, "max_lots_per_bidder": 4, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240333"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2024-12-30", "tender": "333/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "באר שבע", "win_m": 7.2, "dev_m": 35.5646, "total_m": 42.7646, "appraisal_m": 16.195, "vs_appraisal_pct": -55.54, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": null, "reserve_of_appraisal_pct": 17.85, "max_lots_per_bidder": 4, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240333"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2024-12-30", "tender": "333/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "באר שבע", "win_m": 33.3, "dev_m": 49.032, "total_m": 82.332, "appraisal_m": 24.7062, "vs_appraisal_pct": 34.78, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": null, "reserve_of_appraisal_pct": 17.85, "max_lots_per_bidder": 4, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240333"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2024-12-30", "tender": "376/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "אופקים", "win_m": 5.4, "dev_m": 19.6588, "total_m": 25.0588, "appraisal_m": 16.53, "vs_appraisal_pct": -67.33, "runner_up_m": 2.1188, "gap_pct": 154.86, "bids": 3, "units": null, "reserve_of_appraisal_pct": 7.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240376"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2025-01-13", "tender": "331/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "דרום", "place": "באר שבע", "win_m": 1.17, "dev_m": 15.5983, "total_m": 16.7683, "appraisal_m": 12.018, "vs_appraisal_pct": -90.26, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": null, "reserve_of_appraisal_pct": 9.0397, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240331"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2025-01-13", "tender": "331/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "דרום", "place": "באר שבע", "win_m": 0.36, "dev_m": 47.7092, "total_m": 48.0692, "appraisal_m": 8.1516, "vs_appraisal_pct": -95.58, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240331"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P2", "date": "2025-03-26", "tender": "267/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "תל אביב", "place": "תל אביב - יפו", "win_m": 450.0, "dev_m": 46.1823, "total_m": 496.1823, "appraisal_m": 721.4944, "vs_appraisal_pct": -37.63, "runner_up_m": 434.5495, "gap_pct": 3.56, "bids": 19, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240267"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2025-11-11", "tender": "375/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "בית דגן", "win_m": 54.0, "dev_m": 17.2365, "total_m": 71.2365, "appraisal_m": 73.2835, "vs_appraisal_pct": -26.31, "runner_up_m": 53.3604, "gap_pct": 1.2, "bids": 28, "units": null, "reserve_of_appraisal_pct": 3.7379, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250375"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2025-12-03", "tender": "73/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "באר יעקב", "win_m": 63.0, "dev_m": 42.6635, "total_m": 105.6635, "appraisal_m": 131.3438, "vs_appraisal_pct": -52.03, "runner_up_m": 23.4, "gap_pct": 169.23, "bids": 5, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250073"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2025-12-28", "tender": "87/2025", "tender_type": "דיור להשכרה", "market": "דיור להשכרה", "region": "מרכז", "place": "יבנה", "win_m": 13.5, "dev_m": 51.2914, "total_m": 64.7914, "appraisal_m": 12.3, "vs_appraisal_pct": 9.76, "runner_up_m": 9.0, "gap_pct": 50.0, "bids": 3, "units": 200, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250087"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2026-08-05", "tender": "156/2026", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "אופקים", "win_m": 64.8, "dev_m": 78.7464, "total_m": 143.5464, "appraisal_m": 83.9682, "vs_appraisal_pct": -22.83, "runner_up_m": 57.8029, "gap_pct": 12.11, "bids": 6, "units": null, "reserve_of_appraisal_pct": 7.65, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20260156"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2026-08-05", "tender": "311/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "דרום", "place": "שדרות", "win_m": 8.1, "dev_m": 11.1479, "total_m": 19.2479, "appraisal_m": 25.5673, "vs_appraisal_pct": -68.32, "runner_up_m": 7.6, "gap_pct": 6.58, "bids": 17, "units": null, "reserve_of_appraisal_pct": null, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250311"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2026-08-31", "tender": "329/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "נתיבות", "win_m": 17.228, "dev_m": 17.7169, "total_m": 34.9449, "appraisal_m": 20.4067, "vs_appraisal_pct": -15.58, "runner_up_m": 11.4046, "gap_pct": 51.06, "bids": 11, "units": null, "reserve_of_appraisal_pct": 7.65, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250329"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2026-08-31", "tender": "329/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "נתיבות", "win_m": 24.4798, "dev_m": 25.1765, "total_m": 49.6562, "appraisal_m": 28.9593, "vs_appraisal_pct": -15.47, "runner_up_m": 16.2036, "gap_pct": 51.08, "bids": 11, "units": null, "reserve_of_appraisal_pct": 7.65, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250329"}, {"developer": "י.ח. דמרי", "joint": false, "partners": "י.ח. דמרי", "period": "P3", "date": "2026-08-31", "tender": "329/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "נתיבות", "win_m": 9.3776, "dev_m": 14.5687, "total_m": 23.9463, "appraisal_m": 16.7577, "vs_appraisal_pct": -44.04, "runner_up_m": 9.3776, "gap_pct": 0.0, "bids": 14, "units": null, "reserve_of_appraisal_pct": 7.65, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250329"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P1", "date": "2024-06-17", "tender": "352/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "בני עיש", "win_m": 4.8, "dev_m": 20.8968, "total_m": 25.6968, "appraisal_m": 15.102, "vs_appraisal_pct": -68.22, "runner_up_m": 4.0186, "gap_pct": 19.45, "bids": 9, "units": null, "reserve_of_appraisal_pct": 4.5376, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230352"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P1", "date": "2024-08-26", "tender": "207/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "ערד", "win_m": 38.018, "dev_m": 48.0076, "total_m": 86.0256, "appraisal_m": 38.44, "vs_appraisal_pct": -1.1, "runner_up_m": 8.0, "gap_pct": 375.23, "bids": 2, "units": 360, "reserve_of_appraisal_pct": 9.3, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240207"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P2", "date": "2024-12-09", "tender": "386/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "קרית עקרון", "win_m": 23.876, "dev_m": 44.1371, "total_m": 68.0131, "appraisal_m": 67.6486, "vs_appraisal_pct": -64.71, "runner_up_m": 19.511, "gap_pct": 22.37, "bids": 14, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240386"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P2", "date": "2024-12-09", "tender": "386/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "קרית עקרון", "win_m": 29.464, "dev_m": 50.6811, "total_m": 80.1451, "appraisal_m": 87.2671, "vs_appraisal_pct": -66.24, "runner_up_m": 28.7896, "gap_pct": 2.34, "bids": 15, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240386"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P3", "date": "2025-10-28", "tender": "335/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 92.2307, "dev_m": 37.9695, "total_m": 130.2002, "appraisal_m": 108.0205, "vs_appraisal_pct": -14.62, "runner_up_m": 89.0701, "gap_pct": 3.55, "bids": 26, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250335"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P3", "date": "2025-11-24", "tender": "225/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "באר יעקב", "win_m": 125.3324, "dev_m": 29.4816, "total_m": 154.814, "appraisal_m": 147.53, "vs_appraisal_pct": -15.05, "runner_up_m": 108.1818, "gap_pct": 15.85, "bids": 2, "units": 183, "reserve_of_appraisal_pct": 68.25, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250225"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P3", "date": "2026-08-05", "tender": "156/2026", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "דרום", "place": "אופקים", "win_m": 55.8808, "dev_m": 75.5784, "total_m": 131.4592, "appraisal_m": 81.2458, "vs_appraisal_pct": -31.22, "runner_up_m": 30.6667, "gap_pct": 82.22, "bids": 6, "units": null, "reserve_of_appraisal_pct": 7.65, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20260156"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P3", "date": "2026-08-05", "tender": "311/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "דרום", "place": "שדרות", "win_m": 12.128, "dev_m": 13.7817, "total_m": 25.9097, "appraisal_m": 1.3954, "vs_appraisal_pct": 769.12, "runner_up_m": 8.3989, "gap_pct": 44.4, "bids": 18, "units": null, "reserve_of_appraisal_pct": null, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250311"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P3", "date": "2026-08-05", "tender": "311/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "דרום", "place": "שדרות", "win_m": 9.9013, "dev_m": 12.2382, "total_m": 22.1395, "appraisal_m": 26.6619, "vs_appraisal_pct": -62.86, "runner_up_m": 6.5523, "gap_pct": 51.11, "bids": 15, "units": null, "reserve_of_appraisal_pct": null, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250311"}, {"developer": "מגידו י.ק", "joint": false, "partners": "מגידו י.ק", "period": "P3", "date": "2026-08-05", "tender": "158/2026", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "צפון", "place": "מעלות-תרשיחא", "win_m": 1.6374, "dev_m": 14.1212, "total_m": 15.7586, "appraisal_m": 3.0306, "vs_appraisal_pct": -45.97, "runner_up_m": 0.926, "gap_pct": 76.83, "bids": 4, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20260158"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-05-28", "tender": "199/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 34.7706, "dev_m": 35.083, "total_m": 69.8536, "appraisal_m": 71.1307, "vs_appraisal_pct": -51.12, "runner_up_m": 23.8182, "gap_pct": 45.98, "bids": 7, "units": null, "reserve_of_appraisal_pct": 11.9171, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230199"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-06-17", "tender": "352/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "בני עיש", "win_m": 21.881, "dev_m": 32.2214, "total_m": 54.1024, "appraisal_m": 29.7386, "vs_appraisal_pct": -26.42, "runner_up_m": 14.7077, "gap_pct": 48.77, "bids": 16, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230352"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-06-17", "tender": "352/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "בני עיש", "win_m": 10.0495, "dev_m": 18.2049, "total_m": 28.2544, "appraisal_m": 15.6255, "vs_appraisal_pct": -35.69, "runner_up_m": 8.1006, "gap_pct": 24.06, "bids": 12, "units": null, "reserve_of_appraisal_pct": 4.9473, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230352"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-06-17", "tender": "352/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "בני עיש", "win_m": 6.6272, "dev_m": 24.0154, "total_m": 30.6426, "appraisal_m": 12.6013, "vs_appraisal_pct": -47.41, "runner_up_m": 3.5031, "gap_pct": 89.18, "bids": 10, "units": null, "reserve_of_appraisal_pct": 4.0455, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230352"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-06-17", "tender": "361/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 1.8002, "dev_m": 30.2286, "total_m": 32.0288, "appraisal_m": 4.0946, "vs_appraisal_pct": -56.04, "runner_up_m": 0.281, "gap_pct": 540.67, "bids": 2, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230361"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-06-17", "tender": "361/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 39.7615, "dev_m": 89.7584, "total_m": 129.5199, "appraisal_m": 39.7615, "vs_appraisal_pct": -0.0, "runner_up_m": 28.2603, "gap_pct": 40.7, "bids": 4, "units": null, "reserve_of_appraisal_pct": 50.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230361"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-06-17", "tender": "361/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 3.5579, "dev_m": 47.4454, "total_m": 51.0033, "appraisal_m": 4.3663, "vs_appraisal_pct": -18.52, "runner_up_m": 2.8658, "gap_pct": 24.15, "bids": 4, "units": null, "reserve_of_appraisal_pct": 40.7422, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230361"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-09-02", "tender": "198/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 0.2188, "dev_m": 31.6949, "total_m": 31.9136, "appraisal_m": 2.0954, "vs_appraisal_pct": -89.56, "runner_up_m": null, "gap_pct": null, "bids": 3, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240198"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P1", "date": "2024-09-16", "tender": "20/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "חיפה", "place": "קרית אתא", "win_m": 88.1802, "dev_m": 84.0776, "total_m": 172.2577, "appraisal_m": 98.651, "vs_appraisal_pct": -10.61, "runner_up_m": 50.5556, "gap_pct": 74.42, "bids": 4, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240020"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P2", "date": "2024-12-25", "tender": "314/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "נתניה", "win_m": 16.7772, "dev_m": 25.5249, "total_m": 42.3021, "appraisal_m": null, "vs_appraisal_pct": null, "runner_up_m": 12.8001, "gap_pct": 31.07, "bids": 8, "units": null, "reserve_of_appraisal_pct": null, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240314"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P2", "date": "2024-12-30", "tender": "335/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "ירושלים", "win_m": 120.7776, "dev_m": 22.3801, "total_m": 143.1577, "appraisal_m": 22.8281, "vs_appraisal_pct": 429.07, "runner_up_m": 103.7551, "gap_pct": 16.41, "bids": 7, "units": 330, "reserve_of_appraisal_pct": 45.5, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230335"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P2", "date": "2024-12-30", "tender": "96/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "יבנה", "win_m": 41.7776, "dev_m": 71.7668, "total_m": 113.5444, "appraisal_m": 158.5809, "vs_appraisal_pct": -73.66, "runner_up_m": 36.5756, "gap_pct": 14.22, "bids": 10, "units": null, "reserve_of_appraisal_pct": 1.2074, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240096"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P2", "date": "2024-12-30", "tender": "96/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "יבנה", "win_m": 50.9006, "dev_m": 71.7948, "total_m": 122.6954, "appraisal_m": 165.6496, "vs_appraisal_pct": -69.27, "runner_up_m": 42.0571, "gap_pct": 21.03, "bids": 10, "units": null, "reserve_of_appraisal_pct": 1.184, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240096"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P2", "date": "2025-10-19", "tender": "373/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 99.7776, "dev_m": 34.0216, "total_m": 133.7991, "appraisal_m": 126.8877, "vs_appraisal_pct": -21.37, "runner_up_m": 95.5566, "gap_pct": 4.42, "bids": 18, "units": null, "reserve_of_appraisal_pct": 2.2359, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240373"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2025-10-22", "tender": "266/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "יהוד-מונוסון", "win_m": 174.5558, "dev_m": 38.6998, "total_m": 213.2555, "appraisal_m": 181.655, "vs_appraisal_pct": -3.91, "runner_up_m": 166.0495, "gap_pct": 5.12, "bids": 13, "units": 241, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250266"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2025-12-03", "tender": "262/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "אשדוד", "win_m": 73.7776, "dev_m": 67.6092, "total_m": 141.3868, "appraisal_m": 25.9934, "vs_appraisal_pct": 183.83, "runner_up_m": 62.3323, "gap_pct": 18.36, "bids": 5, "units": 320, "reserve_of_appraisal_pct": 45.5, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250262"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2025-12-03", "tender": "394/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "חיפה", "place": "רכסים", "win_m": 25.7776, "dev_m": 32.504, "total_m": 58.2816, "appraisal_m": 18.5082, "vs_appraisal_pct": 39.28, "runner_up_m": 21.1806, "gap_pct": 21.7, "bids": 11, "units": null, "reserve_of_appraisal_pct": 22.8629, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250394"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2025-12-10", "tender": "320/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "יו\"ש", "place": "מעלה אדומים", "win_m": 0.0018, "dev_m": 45.885, "total_m": 45.8868, "appraisal_m": 55.4435, "vs_appraisal_pct": -100.0, "runner_up_m": null, "gap_pct": null, "bids": 4, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250320"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2025-12-10", "tender": "320/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "יו\"ש", "place": "מעלה אדומים", "win_m": 5.7776, "dev_m": 92.3819, "total_m": 98.1595, "appraisal_m": 165.8266, "vs_appraisal_pct": -96.52, "runner_up_m": 3.3604, "gap_pct": 71.93, "bids": 2, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250320"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2025-12-10", "tender": "320/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "יו\"ש", "place": "מעלה אדומים", "win_m": 8.7776, "dev_m": 84.1312, "total_m": 92.9088, "appraisal_m": 137.6075, "vs_appraisal_pct": -93.62, "runner_up_m": 4.7111, "gap_pct": 86.32, "bids": 5, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250320"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2025-12-31", "tender": "474/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 10.1802, "dev_m": 71.9326, "total_m": 82.1128, "appraisal_m": 22.2172, "vs_appraisal_pct": -54.18, "runner_up_m": 8.9998, "gap_pct": 13.12, "bids": 3, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240474"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2026-04-27", "tender": "48/2026", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 66.7776, "dev_m": 68.5408, "total_m": 135.3184, "appraisal_m": 12.3838, "vs_appraisal_pct": 439.24, "runner_up_m": 60.1802, "gap_pct": 10.96, "bids": 15, "units": null, "reserve_of_appraisal_pct": 45.314, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20260048"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2026-04-27", "tender": "48/2026", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 117.7776, "dev_m": 116.6646, "total_m": 234.4422, "appraisal_m": 16.8559, "vs_appraisal_pct": 598.73, "runner_up_m": 107.7708, "gap_pct": 9.29, "bids": 5, "units": null, "reserve_of_appraisal_pct": 45.343, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20260048"}, {"developer": "עמרם אברהם", "joint": false, "partners": "עמרם אברהם", "period": "P3", "date": "2026-04-27", "tender": "48/2026", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 10.7776, "dev_m": 24.8918, "total_m": 35.6694, "appraisal_m": 1.476, "vs_appraisal_pct": 630.19, "runner_up_m": 6.582, "gap_pct": 63.74, "bids": 6, "units": null, "reserve_of_appraisal_pct": 0.0001, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20260048"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P1", "date": "2024-05-28", "tender": "199/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 72.6567, "dev_m": 33.1904, "total_m": 105.847, "appraisal_m": 112.8964, "vs_appraisal_pct": -35.64, "runner_up_m": 63.5558, "gap_pct": 14.32, "bids": 15, "units": null, "reserve_of_appraisal_pct": 3.8616, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230199"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P1", "date": "2024-06-30", "tender": "67/2023", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "נס ציונה", "win_m": 203.3333, "dev_m": 15.4079, "total_m": 218.7413, "appraisal_m": 202.8868, "vs_appraisal_pct": 0.22, "runner_up_m": 191.8603, "gap_pct": 5.98, "bids": 54, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230067"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P1", "date": "2024-08-06", "tender": "175/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "אלעד", "win_m": 10.4498, "dev_m": 4.5326, "total_m": 14.9824, "appraisal_m": 70.6444, "vs_appraisal_pct": -85.21, "runner_up_m": 10.003, "gap_pct": 4.47, "bids": 3, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240175"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P1", "date": "2024-08-06", "tender": "175/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "אלעד", "win_m": 9.4478, "dev_m": 4.0978, "total_m": 13.5456, "appraisal_m": 63.8654, "vs_appraisal_pct": -85.21, "runner_up_m": 9.0776, "gap_pct": 4.08, "bids": 3, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240175"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P1", "date": "2024-09-17", "tender": "129/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "תל אביב", "place": "תל אביב - יפו", "win_m": 94.5596, "dev_m": 1.0158, "total_m": 95.5753, "appraisal_m": 97.7, "vs_appraisal_pct": -3.21, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": 44, "reserve_of_appraisal_pct": 90.0, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240129"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P2", "date": "2024-11-12", "tender": "143/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "באר יעקב", "win_m": 118.4595, "dev_m": 36.2244, "total_m": 154.684, "appraisal_m": 128.1686, "vs_appraisal_pct": -7.58, "runner_up_m": 118.0828, "gap_pct": 0.32, "bids": 22, "units": null, "reserve_of_appraisal_pct": 2.7771, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240143"}, {"developer": "רמי שבירו", "joint": true, "partners": "רמי שבירו, רייסדור יזמות, ת. סורנטו", "period": "P2", "date": "2024-12-02", "tender": "304/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "תל אביב", "place": "תל אביב - יפו", "win_m": 87.1667, "dev_m": 75.7888, "total_m": 162.9556, "appraisal_m": 168.6798, "vs_appraisal_pct": -48.32, "runner_up_m": 59.1402, "gap_pct": 47.39, "bids": 3, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 4, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240304"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P2", "date": "2024-12-18", "tender": "305/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "נתניה", "win_m": 25.5556, "dev_m": 20.9028, "total_m": 46.4583, "appraisal_m": null, "vs_appraisal_pct": null, "runner_up_m": 16.0002, "gap_pct": 59.72, "bids": 4, "units": 83, "reserve_of_appraisal_pct": null, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240305"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P2", "date": "2024-12-30", "tender": "244/2023", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "ראשון לציון", "win_m": 136.5566, "dev_m": 36.4023, "total_m": 172.9588, "appraisal_m": 152.2082, "vs_appraisal_pct": -10.28, "runner_up_m": 128.1233, "gap_pct": 6.58, "bids": 14, "units": null, "reserve_of_appraisal_pct": 15.015, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230244"}, {"developer": "רמי שבירו", "joint": true, "partners": "רמי שבירו, ת. סורנטו", "period": "P2", "date": "2025-01-20", "tender": "437/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "באר יעקב", "win_m": 27.0, "dev_m": 39.0815, "total_m": 66.0815, "appraisal_m": 111.7019, "vs_appraisal_pct": -75.83, "runner_up_m": 26.7606, "gap_pct": 0.89, "bids": 2, "units": null, "reserve_of_appraisal_pct": 23.9571, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240437"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P2", "date": "2025-04-07", "tender": "425/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "רעננה", "win_m": 298.5556, "dev_m": 8.1705, "total_m": 306.726, "appraisal_m": 309.8333, "vs_appraisal_pct": -3.64, "runner_up_m": 232.8792, "gap_pct": 28.2, "bids": 23, "units": null, "reserve_of_appraisal_pct": 3.0373, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240425"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P2", "date": "2025-10-19", "tender": "373/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 103.5566, "dev_m": 46.1116, "total_m": 149.6681, "appraisal_m": 149.8491, "vs_appraisal_pct": -30.89, "runner_up_m": 92.5558, "gap_pct": 11.89, "bids": 11, "units": null, "reserve_of_appraisal_pct": 4.6483, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240373"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P3", "date": "2025-12-24", "tender": "269/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "באר יעקב", "win_m": 79.5566, "dev_m": 27.8945, "total_m": 107.451, "appraisal_m": 94.6924, "vs_appraisal_pct": -15.98, "runner_up_m": 74.8604, "gap_pct": 6.27, "bids": 31, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250269"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P3", "date": "2025-12-29", "tender": "441/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 62.5566, "dev_m": 46.7682, "total_m": 109.3247, "appraisal_m": 121.4071, "vs_appraisal_pct": -48.47, "runner_up_m": 46.1802, "gap_pct": 35.46, "bids": 6, "units": null, "reserve_of_appraisal_pct": 2.8587, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250441"}, {"developer": "רמי שבירו", "joint": true, "partners": "רמי שבירו, רייסדור יזמות", "period": "P3", "date": "2025-12-31", "tender": "190/2024", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "תל אביב", "place": "רמת גן", "win_m": 301.8006, "dev_m": 109.9619, "total_m": 411.7624, "appraisal_m": null, "vs_appraisal_pct": null, "runner_up_m": 301.5003, "gap_pct": 0.1, "bids": 4, "units": null, "reserve_of_appraisal_pct": null, "max_lots_per_bidder": 2, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240190"}, {"developer": "רמי שבירו", "joint": false, "partners": "רמי שבירו", "period": "P3", "date": "2025-12-31", "tender": "209/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "תל אביב", "place": "הרצליה", "win_m": 172.9996, "dev_m": 14.3887, "total_m": 187.3883, "appraisal_m": 161.962, "vs_appraisal_pct": 6.81, "runner_up_m": 166.38, "gap_pct": 3.98, "bids": 27, "units": null, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": 8, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250209"}, {"developer": "רמי שבירו", "joint": true, "partners": "נופר יואב, רמי שבירו", "period": "P3", "date": "2025-12-31", "tender": "210/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "תל אביב", "place": "הרצליה", "win_m": 102.5566, "dev_m": 36.3343, "total_m": 138.8908, "appraisal_m": 191.0492, "vs_appraisal_pct": -46.32, "runner_up_m": 96.787, "gap_pct": 5.96, "bids": 4, "units": 350, "reserve_of_appraisal_pct": 13.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250210"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P1", "date": "2024-05-27", "tender": "31/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "חיפה", "place": "טירת כרמל", "win_m": 8.5556, "dev_m": 32.0398, "total_m": 40.5954, "appraisal_m": 19.9943, "vs_appraisal_pct": -57.21, "runner_up_m": 4.3333, "gap_pct": 97.44, "bids": 2, "units": 116, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240031"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P1", "date": "2024-05-28", "tender": "199/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "כפר סבא", "win_m": 74.8559, "dev_m": 56.3845, "total_m": 131.2404, "appraisal_m": 127.0962, "vs_appraisal_pct": -41.1, "runner_up_m": 70.7706, "gap_pct": 5.77, "bids": 7, "units": null, "reserve_of_appraisal_pct": 11.4241, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230199"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P1", "date": "2024-05-28", "tender": "381/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "יהוד-מונוסון", "win_m": 192.8559, "dev_m": 26.4348, "total_m": 219.2907, "appraisal_m": 237.8055, "vs_appraisal_pct": -18.9, "runner_up_m": 191.5656, "gap_pct": 0.67, "bids": 14, "units": 208, "reserve_of_appraisal_pct": 2.6634, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230381"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P1", "date": "2024-06-17", "tender": "361/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 72.5856, "dev_m": 161.0984, "total_m": 233.684, "appraisal_m": 29.9298, "vs_appraisal_pct": 142.52, "runner_up_m": 52.2603, "gap_pct": 38.89, "bids": 6, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230361"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P1", "date": "2024-06-17", "tender": "361/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 13.986, "dev_m": 70.5978, "total_m": 84.5838, "appraisal_m": 7.3269, "vs_appraisal_pct": 90.89, "runner_up_m": 10.1802, "gap_pct": 37.38, "bids": 5, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230361"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P1", "date": "2024-06-17", "tender": "361/2023", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 13.986, "dev_m": 61.0247, "total_m": 75.0107, "appraisal_m": 14.0604, "vs_appraisal_pct": -0.53, "runner_up_m": 10.1802, "gap_pct": 37.38, "bids": 5, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 3, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230361"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P2", "date": "2024-12-30", "tender": "244/2023", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "ראשון לציון", "win_m": 60.5856, "dev_m": 16.8349, "total_m": 77.4205, "appraisal_m": 64.6205, "vs_appraisal_pct": -6.24, "runner_up_m": 60.5556, "gap_pct": 0.05, "bids": 13, "units": null, "reserve_of_appraisal_pct": 15.015, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20230244"}, {"developer": "שי-חי", "joint": true, "partners": "שי-חי, מור לוגיסטיקה", "period": "P2", "date": "2025-02-24", "tender": "357/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "צפון", "place": "כפר ורדים", "win_m": 7.0778, "dev_m": 36.734, "total_m": 43.8118, "appraisal_m": 5.6907, "vs_appraisal_pct": 24.38, "runner_up_m": 2.5556, "gap_pct": 176.96, "bids": 2, "units": 122, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240357"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P2", "date": "2025-04-07", "tender": "425/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "מרכז", "place": "רעננה", "win_m": 101.5856, "dev_m": 3.8519, "total_m": 105.4375, "appraisal_m": 152.4274, "vs_appraisal_pct": -33.35, "runner_up_m": 100.0006, "gap_pct": 1.59, "bids": 34, "units": null, "reserve_of_appraisal_pct": 4.1159, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240425"}, {"developer": "שי-חי", "joint": true, "partners": "שי-חי, אקוויטיגו, אינג''יניריקה 21", "period": "P3", "date": "2025-11-09", "tender": "215/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "צפון", "place": "חצור הגלילית", "win_m": 11.2, "dev_m": 5.3265, "total_m": 16.5265, "appraisal_m": 10.7231, "vs_appraisal_pct": 4.45, "runner_up_m": 10.5313, "gap_pct": 6.35, "bids": 11, "units": 56, "reserve_of_appraisal_pct": 4.65, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250215"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P3", "date": "2025-11-12", "tender": "1/2025", "tender_type": "מכרז פומבי רגיל", "market": "שוק חופשי", "region": "מרכז", "place": "ראשון לציון", "win_m": 15.0, "dev_m": 3.0019, "total_m": 18.0019, "appraisal_m": 76.0607, "vs_appraisal_pct": -80.28, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": 102, "reserve_of_appraisal_pct": 6.5737, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250001"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P3", "date": "2025-12-03", "tender": "235/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "חיפה", "place": "חדרה", "win_m": 191.8057, "dev_m": 21.1418, "total_m": 212.9476, "appraisal_m": 4.4434, "vs_appraisal_pct": 4216.62, "runner_up_m": 180.0771, "gap_pct": 6.51, "bids": 24, "units": null, "reserve_of_appraisal_pct": 45.5, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240235"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P3", "date": "2025-12-03", "tender": "394/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "חיפה", "place": "רכסים", "win_m": 4.1806, "dev_m": 26.4885, "total_m": 30.6691, "appraisal_m": 18.126, "vs_appraisal_pct": -76.94, "runner_up_m": 4.0, "gap_pct": 4.51, "bids": 9, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250394"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P3", "date": "2025-12-31", "tender": "474/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 28.5859, "dev_m": 65.9716, "total_m": 94.5575, "appraisal_m": 31.2796, "vs_appraisal_pct": -8.61, "runner_up_m": 22.1802, "gap_pct": 28.88, "bids": 4, "units": null, "reserve_of_appraisal_pct": 0.0, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240474"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P3", "date": "2025-12-31", "tender": "263/2025", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "ירושלים", "place": "בית שמש", "win_m": 13.5856, "dev_m": 104.7246, "total_m": 118.3102, "appraisal_m": 10.5095, "vs_appraisal_pct": 29.27, "runner_up_m": null, "gap_pct": null, "bids": 1, "units": null, "reserve_of_appraisal_pct": 114.3984, "max_lots_per_bidder": null, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20250263"}, {"developer": "שי-חי", "joint": false, "partners": "שי-חי", "period": "P3", "date": "2026-02-02", "tender": "322/2024", "tender_type": "מחיר מטרה", "market": "מחיר מטרה / למשתכן", "region": "חיפה", "place": "נהריה", "win_m": 13.5996, "dev_m": 12.2651, "total_m": 25.8647, "appraisal_m": 50.4746, "vs_appraisal_pct": -73.06, "runner_up_m": 12.158, "gap_pct": 11.86, "bids": 2, "units": null, "reserve_of_appraisal_pct": 23.7033, "max_lots_per_bidder": 1, "url": "https://apps.land.gov.il/MichrazimSite/#/michraz/20240322"}], "meta": {"fetched": "2026-10-19", "date_from": "2024-04-01", "date_to": "2026-10-19", "tenders_in_range": 737, "tenders_fetched": 737}};</script>
+<script>
+// A small stand-in for the Dashboard runtime: datasets come from the embedded JSON,
+// calculations run in the order they are declared, and onData re-runs on resize and theme change.
+window.dash = (() => {
+  const store = { lots: window.EMBED.lots }, calcs = [], subs = [];
+  const run = () => { for (const c of calcs) store[c.id] = c.fn(...c.inputs.map((i) => store[i])); };
+  const colors = () => { const cs = getComputedStyle(document.documentElement); return [1, 2, 3, 4, 5, 6, 7, 8].map((i) => cs.getPropertyValue('--s' + i).trim()); };
+  const api = {
+    calc: (id, o) => calcs.push({ id, ...o }),
+    loader: () => {},
+    data: (id) => (id in store ? { status: 'ok', data: store[id], columns: [], meta: [] } : { status: 'missing', data: [] }),
+    onData: (fn) => subs.push(fn),
+    setLink: (id) => { try { history.replaceState(null, '', '#' + id); } catch (e) { /* the frame may refuse */ } },
+    params: () => ({}), setParams: () => {}, resetParams: () => {}, refresh: () => {},
+    colors: colors(),
+  };
+  const fire = () => { api.colors = colors(); subs.forEach((f) => f()); };
+  window.addEventListener('DOMContentLoaded', () => { run(); fire(); });
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(fire, 120); });
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fire); } catch (e) { /* older browsers */ }
+  new MutationObserver(fire).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  return api;
+})();
+
+</script>
+<script>
+
+dash.calc('by_dev_period', {
+  inputs: ['lots'],
+  title: 'מדדים לפי יזם ותקופה',
+  description: 'סכומים, חציונים וספירות לכל יזם ולכל היזמים יחד, בכל תקופה ובכל התקופה, והשינוי מהתקופה הקודמת.',
+  fn: (lots) => {
+    const num = (v) => (v === null || v === undefined || v === '' ? null : Number(v));
+    const med = (a) => { const s = a.filter((v) => v !== null && !isNaN(v)).sort((x, y) => x - y); if (!s.length) return null; const i = (s.length - 1) / 2; return (s[Math.floor(i)] + s[Math.ceil(i)]) / 2; };
+    const sum = (rs, f) => rs.reduce((s, r) => s + (num(r[f]) || 0), 0);
+    const isJ = (r) => r.joint === true || r.joint === 'true';
+    const one = (developer, period, all) => {
+      const rs = all.filter((r) => !isJ(r)), jr = all.filter(isJ);
+      const total = sum(rs, 'total_m'), dev = sum(rs, 'dev_m');
+      const withRunner = rs.filter((r) => num(r.runner_up_m) !== null);
+      const mk = (m) => sum(rs.filter((r) => r.market === m), 'total_m');
+      const byTender = new Map(); rs.forEach((r) => byTender.set(r.tender, (byTender.get(r.tender) || 0) + num(r.total_m)));
+      const unitLots = rs.filter((r) => num(r.units) > 0);
+      const unitTenders = new Set(unitLots.map((r) => r.tender));
+      const unitCost = sum(rs.filter((r) => unitTenders.has(r.tender)), 'total_m');
+      const units = sum(unitLots, 'units');
+      return {
+        key: developer + '|' + period, developer, period, lots: rs.length, tenders: byTender.size,
+        win_m: sum(rs, 'win_m'), dev_m: dev, total_m: total,
+        dev_share_pct: total ? dev / total * 100 : null,
+        joint_lots: jr.length, joint_m: sum(jr, 'total_m'),
+        med_vs_app: med(all.map((r) => num(r.vs_appraisal_pct))),
+        med_gap: med(all.map((r) => num(r.gap_pct))),
+        med_bids: med(all.map((r) => num(r.bids))),
+        single_bid: rs.filter((r) => num(r.bids) === 1).length,
+        single_share_pct: rs.length ? rs.filter((r) => num(r.bids) === 1).length / rs.length * 100 : null,
+        left_m: withRunner.reduce((s, r) => s + num(r.win_m) - num(r.runner_up_m), 0),
+        places: new Set(rs.map((r) => r.place)).size,
+        regions: new Set(rs.map((r) => r.region)).size,
+        units, k_per_unit: units ? unitCost / units * 1000 : null,
+        free_m: mk('שוק חופשי'), prog_m: mk('מחיר מטרה / למשתכן'), rent_m: mk('דיור להשכרה'),
+        prog_share_pct: total ? mk('מחיר מטרה / למשתכן') / total * 100 : null,
+        top_tender_share_pct: total ? Math.max(0, ...byTender.values()) / total * 100 : null,
+      };
+    };
+    const devs = [...new Set(lots.map((r) => r.developer))];
+    const out = [];
+    for (const d of [...devs, 'כל היזמים']) {
+      // the group counts a joint lot once, even when two of the seven shared it
+      const mine = d === 'כל היזמים' ? [...new Map(lots.map((r) => [r.tender + '|' + r.date + '|' + r.win_m, r])).values()] : lots.filter((r) => r.developer === d);
+      for (const p of ['P1', 'P2', 'P3', 'ALL']) out.push(one(d, p, p === 'ALL' ? mine : mine.filter((r) => r.period === p)));
+    }
+    for (const r of out.filter((x) => x.developer === 'כל היזמים')) {
+      const peers = out.filter((x) => x.developer !== 'כל היזמים' && x.period === r.period);
+      r.devs_n = peers.length;
+      r.devs_active = peers.filter((x) => x.lots > 0).length;
+      r.devs_above_app = peers.filter((x) => x.med_vs_app !== null && x.med_vs_app > 0).length;
+      r.devs_single = peers.filter((x) => x.single_bid > 0).length;
+    }
+    const prevOf = { P2: 'P1', P3: 'P2' };
+    for (const r of out) {
+      const prev = out.find((x) => x.developer === r.developer && x.period === prevOf[r.period]);
+      for (const f of ['lots', 'win_m', 'dev_m', 'total_m', 'med_vs_app', 'med_gap', 'med_bids', 'single_bid', 'left_m', 'units', 'prog_share_pct', 'devs_above_app', 'devs_single']) {
+        if (!(f in r)) continue;
+        r['prev_' + f] = prev ? prev[f] : null;
+        r['chg_' + f] = prev && prev[f] !== null && r[f] !== null ? r[f] - prev[f] : null;
+      }
+      r.chg_pct_total_m = prev && prev.total_m ? (r.total_m / prev.total_m - 1) * 100 : null;
+      r.chg_pct_lots = prev && prev.lots ? (r.lots / prev.lots - 1) * 100 : null;
+    }
+    return out;
+  },
+});
+
+dash.calc('ranking', {
+  inputs: ['by_dev_period'],
+  title: 'דירוג עוצמת רכישה (שקלול שלי)',
+  description: 'דירוג היזמים בכל אחד משישה מדדים על כל התקופה, וממוצע הדירוגים במשקל שווה.',
+  fn: (by_dev_period) => {
+    const rows = by_dev_period.filter((r) => r.period === 'ALL' && r.developer !== 'כל היזמים');
+    const metrics = [['total_m', -1], ['lots', -1], ['places', -1], ['med_vs_app', 1], ['med_gap', 1], ['med_bids', -1]];
+    const out = rows.map((r) => ({ developer: r.developer }));
+    for (const [f, dir] of metrics) {
+      const sorted = [...rows].sort((a, b) => (a[f] === null) - (b[f] === null) || (a[f] - b[f]) * dir);
+      sorted.forEach((r, i) => { const o = out.find((x) => x.developer === r.developer); o['rank_' + f] = i + 1; o['val_' + f] = r[f]; });
+    }
+    out.forEach((o) => { o.avg_rank = metrics.reduce((s, [f]) => s + o['rank_' + f], 0) / metrics.length; });
+    [...out].sort((a, b) => a.avg_rank - b.avg_rank || a.rank_total_m - b.rank_total_m).forEach((o, i) => { o.final_rank = i + 1; });
+    return out.sort((a, b) => a.final_rank - b.final_rank);
+  },
+});
+
+dash.calc('insights', {
+  inputs: ['by_dev_period', 'ranking'],
+  title: 'קריאה אסטרטגית',
+  description: 'שש קביעות מחושבות: עוגן, חציית השומה, כסף על השולחן, הידרדרות, צמיחה במחיר וריכוז. כל אחת מחזירה יזם ומספרים.',
+  fn: (by_dev_period, ranking) => {
+    const G = 'כל היזמים';
+    const at = (p) => by_dev_period.filter((r) => r.period === p && r.developer !== G);
+    const row = (d, p) => by_dev_period.find((r) => r.developer === d && r.period === p);
+    const f1 = (v) => (Math.round(v * 10) / 10).toLocaleString('he-IL');
+    const sg = (v) => '\u202A' + (v > 0 ? '+' : v < 0 ? '−' : '') + f1(Math.abs(v)) + '%\u202C';
+    const pts = (v) => '\u202A' + (v > 0 ? '+' : v < 0 ? '−' : '') + f1(Math.abs(v)) + '\u202C נק׳';
+    const top = (rs, f, dir = -1) => [...rs].filter((r) => r[f] !== null && r[f] !== undefined).sort((a, b) => (a[f] - b[f]) * dir)[0];
+    const out = [];
+    const a = ranking[0], aR = a && row(a.developer, 'ALL');
+    if (a) out.push({ id: 'anchor', pill: 'עוגן', tone: 'ok', developer: a.developer, value: aR.total_m,
+      text: `${a.developer}: מקום ראשון בעוצמת רכישה, ${f1(aR.total_m)} מיליון ₪ ב־${aR.lots} מגרשים, בחציון ${sg(aR.med_vs_app)} מול השומה.`,
+      so: 'זה הרף: היקף גדול בלי לשלם מעל השומה.' });
+    const cur = at('P3').filter((r) => r.med_vs_app !== null);
+    const over = cur.filter((r) => r.med_vs_app > 0).sort((x, y) => y.med_vs_app - x.med_vs_app);
+    if (over.length) out.push({ id: 'breach', pill: 'מעל השומה', tone: 'bad', developer: over[0].developer, value: over.length,
+      text: `${over.length} מתוך ${cur.length} שילמו בחציון מעל השומה ב־12 החודשים האחרונים: ${over.map((r) => `${r.developer} ${sg(r.med_vs_app)}`).join(', ')}.`,
+      so: 'הם מתמחרים עליית מחירים עתידית; כל האטה במכירות פוגעת בהם ראשונים.' });
+    else { const c = top(cur, 'med_vs_app'); if (c) out.push({ id: 'breach', pill: 'קרוב לשומה', tone: 'warn', developer: c.developer, value: c.med_vs_app,
+      text: `אף יזם לא חצה את השומה בחציון ב־12 החודשים האחרונים. הכי קרוב: ${c.developer}, ${sg(c.med_vs_app)} על ${c.lots} מגרשים.`,
+      so: 'המרווח מול השומה נשחק אצלו יותר מאצל כולם; זה היזם עם הכי פחות כרית מחיר.' }); }
+    const l = top(at('ALL').filter((r) => r.win_m).map((r) => ({ ...r, left_pct: r.left_m / r.win_m * 100 })), 'left_pct');
+    if (l) out.push({ id: 'left', pill: 'כסף על השולחן', tone: 'warn', developer: l.developer, value: l.left_m,
+      text: `${l.developer} השאיר ${f1(l.left_m)} מיליון ₪ מעל ההצעות השניות, ${f1(l.left_pct)}% מסכום הזכיות שלו.`,
+      so: 'הכי הרבה כסף ששולם בלי צורך. תמחור לפי הצורך שלו בקרקע, לא לפי השוק.' });
+    const d = top(at('P3').filter((r) => r.chg_med_vs_app !== null), 'chg_med_vs_app');
+    if (d && d.chg_med_vs_app > 0) out.push({ id: 'drift', pill: 'הידרדרות', tone: 'bad', developer: d.developer, value: d.chg_med_vs_app,
+      text: `${d.developer} עבר מ־${sg(d.prev_med_vs_app)} ל־${sg(d.med_vs_app)} מול השומה: ${pts(d.chg_med_vs_app)} בשנה.`,
+      so: 'הקפיצה החדה ביותר במחיר ששולם; הקרקע החדשה שלו יקרה בהרבה מהמלאי הקודם.' });
+    const gr = top(at('P3').filter((r) => r.chg_pct_total_m !== null && r.chg_pct_total_m > 0 && r.chg_med_vs_app !== null && r.chg_med_vs_app > 0)
+      .map((r) => ({ ...r, div: r.chg_pct_total_m })), 'div');
+    if (gr) out.push({ id: 'growth', pill: 'צמיחה במחיר', tone: 'warn', developer: gr.developer, value: gr.chg_pct_total_m,
+      text: `${gr.developer} הגדיל את ההיקף ב־${sg(gr.chg_pct_total_m)}, ובמקביל שילם ${pts(gr.chg_med_vs_app)} יותר מול השומה.`,
+      so: 'צמיחה שנקנתה במחיר. נפח גדל, המרווח העתידי קטן.' });
+    const c = top(at('ALL'), 'top_tender_share_pct');
+    if (c) out.push({ id: 'conc', pill: 'ריכוז', tone: c.top_tender_share_pct >= 50 ? 'bad' : 'warn', developer: c.developer, value: c.top_tender_share_pct,
+      text: `${c.developer}: ${f1(c.top_tender_share_pct)}% מהיקף הזכיות שלו במכרז אחד, מתוך ${c.tenders} מכרזים.`,
+      so: 'התיק תלוי בפרויקט יחיד; עיכוב בו הוא עיכוב בכל החברה.' });
+    return out;
+  },
+});
+
+dash.calc('terms_by_dev', {
+  inputs: ['lots'],
+  title: 'תנאי המכרזים לפי יזם',
+  description: 'לכל יזם: מספר המכרזים, סוגי המכרז, חציון מחיר הסף מול השומה, חלק המגרשים במכרזים עם מגבלת מגרש אחד למציע, וארבעת המכרזים הגדולים.',
+  fn: (lots) => {
+    const num = (v) => (v === null || v === undefined || v === '' ? null : Number(v));
+    const med = (a) => { const s = a.filter((v) => v !== null).sort((x, y) => x - y); if (!s.length) return null; const i = (s.length - 1) / 2; return (s[Math.floor(i)] + s[Math.ceil(i)]) / 2; };
+    const devs = [...new Set(lots.map((r) => r.developer))];
+    return devs.map((developer) => {
+      const rs = lots.filter((r) => r.developer === developer);
+      const t = new Map(); rs.forEach((r) => { const o = t.get(r.tender) || { tender: r.tender, place: r.place, date: r.date, type: r.tender_type, url: r.url, total: 0, lots: 0 }; o.total += num(r.total_m); o.lots += 1; t.set(r.tender, o); });
+      const types = new Map(); rs.forEach((r) => types.set(r.tender_type, (types.get(r.tender_type) || 0) + 1));
+      return {
+        developer, tenders: t.size, lots: rs.length,
+        types: [...types].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} (${n})`).join(', '),
+        med_reserve_pct: med(rs.map((r) => num(r.reserve_of_appraisal_pct))),
+        capped_lots: rs.filter((r) => num(r.max_lots_per_bidder) === 1).length,
+        dev_m: rs.reduce((s, r) => s + (num(r.dev_m) || 0), 0),
+        top: [...t.values()].sort((a, b) => b.total - a.total).slice(0, 4),
+      };
+    });
+  },
+});
+
+dash.calc('wide', {
+  inputs: ['by_dev_period'],
+  title: 'כל המדדים בשלוש תקופות',
+  description: 'כל מדד לכל יזם בשלוש התקופות, והשינוי בין 12 החודשים האחרונים לקודמים.',
+  fn: (by_dev_period) => {
+    const metrics = ['joint_m', 'total_m', 'win_m', 'dev_m', 'lots', 'tenders', 'free_m', 'prog_m', 'rent_m', 'prog_share_pct', 'dev_share_pct', 'med_vs_app', 'k_per_unit', 'units', 'med_gap', 'left_m', 'med_bids', 'single_bid', 'places', 'regions', 'top_tender_share_pct'];
+    const devs = [...new Set(by_dev_period.map((r) => r.developer))];
+    const out = [];
+    for (const metric of metrics) for (const developer of devs) {
+      const v = (p) => { const r = by_dev_period.find((x) => x.developer === developer && x.period === p); return r && r[metric] !== undefined ? r[metric] : null; };
+      const P1 = v('P1'), P2 = v('P2'), P3 = v('P3');
+      out.push({ key: developer + '|' + metric, developer, metric, P1, P2, P3, chg: P2 !== null && P3 !== null ? P3 - P2 : null });
+    }
+    return out;
+  },
+});
+
+window.DV = { focus: null };
+
+window.DV.redraw = () => {
+  const S = window.DV, G = 'כל היזמים';
+  const $ = (id) => document.getElementById(id);
+  const nn = (v) => v === null || v === undefined || (typeof v === 'number' && isNaN(v));
+  const f1 = (v) => (nn(v) ? 'אין נתון' : (Math.round(v * 10) / 10).toLocaleString('he-IL'));
+  const f0 = (v) => (nn(v) ? 'אין נתון' : Math.round(v).toLocaleString('he-IL'));
+  const sg = (v) => (nn(v) ? 'אין נתון' : ltr((v > 0 ? '+' : v < 0 ? '−' : '') + f1(Math.abs(v)) + '%'));
+  const pts = (v) => (nn(v) ? 'אין נתון' : ltr((v > 0 ? '+' : v < 0 ? '−' : '') + f1(Math.abs(v))) + ' נק׳');
+  const pct = (v) => (nn(v) ? 'אין נתון' : f1(v) + '%');
+  const mil = (v) => (nn(v) ? 'אין נתון' : f1(v));
+  const ltr = (s) => '\u202A' + s + '\u202C';
+  // HTML: each LTR embedding becomes an isolated <bdi>, which keeps signs and units in place
+  const html = (s) => esc(s).replace(/\u202A/g, '<bdi dir="ltr">').replace(/\u202C/g, '</bdi>');
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const enc = (v) => String(v).replace(/%/g, '%25').replace(/&/g, '%26').replace(/=/g, '%3D');
+  const PL = { P1: '04–10/2024 (חלקי)', P2: '10/2024–10/2025', P3: '10/2025–10/2026', ALL: 'כל התקופה' };
+
+  const B = dash.data('by_dev_period'), R = dash.data('ranking'), I = dash.data('insights'), TB = dash.data('terms_by_dev'), Wd = dash.data('wide'), Lt = dash.data('lots');
+  const ok = B.status === 'ok' && Array.isArray(B.data) && B.data.length;
+  const failed = ['by_dev_period', 'lots'].some((id) => dash.data(id).status === 'error');
+  document.querySelectorAll('.dv .dash-skeleton').forEach((el) => { if (ok || failed) el.classList.remove('dash-skeleton'); });
+  const charts = ['map-chart', 'c-win', 'c-mix', 'c-devshare', 'c-vsapp', 'c-unit', 'c-gap', 'c-single', 'c-bids', 'c-all'];
+  if (!ok) { charts.forEach((id) => { $(id).innerHTML = failed ? '<div class="fail">Failed to load</div>' : ''; }); return; }
+
+  const rows = B.data;
+  const row = (d, p) => rows.find((r) => r.developer === d && r.period === p) || {};
+  const devs = rows.filter((r) => r.period === 'ALL' && r.developer !== G).sort((a, b) => b.total_m - a.total_m).map((r) => r.developer);
+  const color = (d) => dash.colors[devs.indexOf(d) % dash.colors.length];
+  const op = (d, lo = 0.35) => (S.focus && S.focus !== d ? lo : 1);
+  const setFocus = (d) => { S.focus = S.focus === d ? null : d; window.DV.redraw(); };
+  const C = { old: 'var(--cds-chart-muted)', mid: dash.colors[1], now: dash.colors[0], crit: 'var(--cds-chart-status-critical)' };
+
+  // ---------- header ----------
+  if (Lt.status === 'ok') {
+    const tn = new Set(Lt.data.map((r) => r.tender)).size;
+    $('scope').textContent = `${devs.length} יזמים \u200F·\u200F ${f0(Lt.data.length)} מגרשים \u200F·\u200F ${f0(tn)} מכרזים \u200F·\u200F ועדות 1.4.2024–19.10.2026 \u200F·\u200F מיליוני ₪ \u200F·\u200F מקור: רמ״י`;
+  }
+  const gN = row(G, 'P3');
+  const take = $('takeaway'); take.replaceChildren();
+  const sp = (src, field, where, text, bold) => { const e = document.createElement(bold ? 'b' : 'span'); e.dataset.source = src; e.dataset.field = field; if (where) e.dataset.where = where; e.textContent = text; return e; };
+  const gw = `developer=${enc(G)}&period=P3`;
+  if (R.status === 'ok' && R.data.length) {
+    const first = R.data[0], last = R.data[R.data.length - 1];
+    take.append(sp('ranking', 'developer', `developer=${enc(first.developer)}`, first.developer, true), ' מוביל את דירוג עוצמת הרכישה, ',
+      sp('ranking', 'developer', `developer=${enc(last.developer)}`, last.developer, true), ' סוגר אותו. ');
+  }
+  take.append('ב־12 החודשים האחרונים ', sp('by_dev_period', 'devs_above_app', gw, f0(gN.devs_above_app), true), ` מתוך ${f0(gN.devs_n)} שילמו בחציון מעל השומה, והקבוצה כולה זכתה ב־`,
+    sp('by_dev_period', 'total_m', gw, f1(gN.total_m), true), ' מיליון ₪ כולל פיתוח, ', sp('by_dev_period', 'chg_pct_total_m', gw, ltr(sg(gN.chg_pct_total_m)), true),
+    ' מול השנה שלפני, בחציון ', sp('by_dev_period', 'med_vs_app', gw, ltr(sg(gN.med_vs_app)), true), ' מול השומה.');
+
+  const fc = $('focus'); fc.replaceChildren();
+  for (const d of [null, ...devs]) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', String(S.focus === d));
+    if (d) { const i = document.createElement('i'); i.style.background = color(d); b.append(i); }
+    b.append(d || 'כל הקבוצה');
+    b.addEventListener('click', () => { S.focus = d; window.DV.redraw(); });
+    fc.append(b);
+  }
+  const nav = $('nav');
+  if (!nav.childElementCount) for (const [id, l] of [['snapshot', 'תמונת מצב'], ['map', 'מפת תמחור'], ['rank', 'דירוג'], ['scale', 'היקף ותמהיל'], ['price', 'מחיר'], ['comp', 'תחרות'], ['insights', 'קריאה אסטרטגית'], ['terms', 'תנאי מכרזים'], ['all', 'כל הנתונים'], ['method', 'שיטה']]) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = l;
+    b.addEventListener('click', () => { $(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); dash.setLink(id); });
+    nav.append(b);
+  }
+
+  // ---------- tiles ----------
+  const who = S.focus || G, cur = row(who, 'P3'), w = `developer=${enc(who)}&period=P3`;
+  $('snap-sub').textContent = `${S.focus || 'כל הקבוצה'} \u200F·\u200F 12 החודשים האחרונים מול 12 החודשים שלפניהם`;
+  // [field, label, value format, change text, good direction (+1 up is good, -1 down is good, 0 neutral), prev format]
+  const chgPct = (c, p) => (nn(p) || !p ? 'אין נתון' : sg((c / p - 1) * 100));
+  const chgAbs = (c, p) => (nn(p) || nn(c) ? 'אין נתון' : ltr((c - p > 0 ? '+' : c - p < 0 ? '−' : '') + f0(Math.abs(c - p))));
+  const chgPts = (c, p) => (nn(p) || nn(c) ? 'אין נתון' : pts(c - p));
+  const tiles = S.focus ? [
+    ['total_m', 'זכיות כולל פיתוח', (v) => `${mil(v)} <small>מ׳ ₪</small>`, chgPct, 0, mil],
+    ['lots', 'מגרשים שנזכו', f0, chgAbs, 0, f0],
+    ['med_vs_app', 'חציון מול השומה', (v) => ltr(sg(v)), chgPts, -1, sg],
+    ['med_gap', 'חציון פער מההצעה השנייה', pct, chgPts, -1, pct],
+    ['left_m', 'כסף על השולחן', (v) => `${mil(v)} <small>מ׳ ₪</small>`, chgPct, -1, mil],
+    ['single_bid', 'זכיות בהצעה יחידה', f0, chgAbs, 0, f0],
+  ] : [
+    ['total_m', 'זכיות הקבוצה כולל פיתוח', (v) => `${mil(v)} <small>מ׳ ₪</small>`, chgPct, 0, mil],
+    ['lots', 'מגרשים שנזכו', f0, chgAbs, 0, f0],
+    ['med_vs_app', 'חציון מול השומה', (v) => ltr(sg(v)), chgPts, -1, sg],
+    ['med_gap', 'חציון פער מההצעה השנייה', pct, chgPts, -1, pct],
+    ['devs_above_app', 'יזמים מעל השומה בחציון', (v) => `${f0(v)} <small>מתוך ${f0(cur.devs_n)}</small>`, chgAbs, -1, f0],
+    ['left_m', 'כסף על השולחן', (v) => `${mil(v)} <small>מ׳ ₪</small>`, chgPct, -1, mil],
+  ];
+  const kp = $('kpis'); kp.replaceChildren();
+  for (const [f, label, fmt, cfmt, good, pfmt] of tiles) {
+    const c = cur[f], p = cur['prev_' + f];
+    const box = document.createElement('div'); box.className = 'kpi';
+    const lb = document.createElement('label'); lb.textContent = label;
+    const v = document.createElement('div'); v.className = 'v'; v.dataset.source = 'by_dev_period'; v.dataset.field = f; v.dataset.where = w; v.innerHTML = fmt(c);
+    const d = document.createElement('div'); d.className = 'd';
+    const ch = document.createElement('span'); ch.innerHTML = html(cfmt(c, p));
+    const diff = !nn(c) && !nn(p) ? c - p : 0;
+    if (good && diff) ch.className = diff * good > 0 ? 'good' : 'bad';
+    const pv = document.createElement('span'); pv.dataset.source = 'by_dev_period'; pv.dataset.field = 'prev_' + f; pv.dataset.where = w; pv.innerHTML = html(` · לפני ${pfmt(p)}`);
+    d.append(ch, pv); box.append(lb, v, d); kp.append(box);
+  }
+
+  // ---------- shared helpers ----------
+  const tip = (el) => { const card = el.closest('.card'); let t = card.querySelector(':scope > .tip'); if (!t) { t = document.createElement('div'); t.className = 'tip'; t.hidden = true; card.append(t); } return t; };
+  const showTip = (el, ev, html) => { const card = el.closest('.card'), t = tip(el); t.innerHTML = html; t.hidden = false; const cr = card.getBoundingClientRect(); let x = ev.clientX - cr.left + 14; const y = ev.clientY - cr.top + 14; if (x + t.offsetWidth > cr.width - 6) x = ev.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, x) + 'px'; t.style.top = y + 'px'; };
+  const hideTip = (el) => { const t = el.closest('.card').querySelector(':scope > .tip'); if (t) t.hidden = true; };
+  const textW = (svg, texts, cls = 'lab') => { const g = svg.append('g'); let m = 0; texts.forEach((t) => { m = Math.max(m, g.append('text').attr('class', cls).text(t).node().getComputedTextLength()); }); g.remove(); return m; };
+  const legend = (id, items) => $(id).replaceChildren(...items.map(([l, c]) => { const s = document.createElement('span'); const i = document.createElement('i'); i.style.background = c; s.append(i, l); return s; }));
+
+  // Horizontal bars, RTL: names on the right, bars grow leftwards from zero; label "value \u200F·\u200F insight".
+  function hbars(id, items, series, o = {}) {
+    const el = $(id); el.innerHTML = '';
+    items = [...items].sort((a, b) => (nn(b[series[0].key]) ? -Infinity : b[series[0].key]) - (nn(a[series[0].key]) ? -Infinity : a[series[0].key]));
+    const W = Math.max(280, el.clientWidth), bandH = series.length > 1 ? 9 * series.length + 14 : 24, H = items.length * bandH + 26;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const nameW = Math.min(W * 0.34, textW(svg, items.map((d) => d.dev)) + 10);
+    const labW = Math.min(W * 0.3, textW(svg, items.map((d) => o.label(d)), '') + 10);
+    const vals = items.flatMap((d) => series.map((s) => d[s.key])).filter((v) => !nn(v));
+    const lo = Math.min(0, d3.min(vals) ?? 0, o.ref ?? 0), hi = Math.max(0, d3.max(vals) ?? 1, o.ref ?? 0);
+    const x = d3.scaleLinear([lo, hi], [W - nameW, labW]).nice();
+    const y = d3.scaleBand(items.map((d) => d.dev), [4, H - 22]).padding(0.22);
+    const sb = d3.scaleBand(series.map((s) => s.key), [0, y.bandwidth()]).padding(0.12);
+    const nt = W < 520 ? 3 : 4;
+    svg.append('g').selectAll('line').data(x.ticks(nt)).join('line').attr('x1', (v) => x(v)).attr('x2', (v) => x(v)).attr('y1', 0).attr('y2', H - 22).style('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(x.ticks(nt)).join('text').attr('x', (v) => x(v)).attr('y', H - 6).attr('text-anchor', 'middle').text((v) => o.tick(v));
+    svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', 0).attr('y2', H - 22).style('stroke', 'var(--cds-chart-axis)');
+    if (!nn(o.ref)) svg.append('line').attr('x1', x(o.ref)).attr('x2', x(o.ref)).attr('y1', 0).attr('y2', H - 22).style('stroke', o.refColor || 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 3');
+    const g = svg.append('g').selectAll('g').data(items).join('g').attr('opacity', (d) => op(d.dev)).style('cursor', 'pointer').on('click', (ev, d) => setFocus(d.dev));
+    g.append('text').attr('class', 'lab').attr('x', W - 2).attr('y', (d) => y(d.dev) + y.bandwidth() / 2).attr('dy', '.35em').attr('text-anchor', 'end').text((d) => d.dev);
+    series.forEach((s) => g.filter((d) => !nn(d[s.key])).append('rect')
+      .attr('x', (d) => Math.min(x(0), x(d[s.key]))).attr('width', (d) => Math.max(1.5, Math.abs(x(d[s.key]) - x(0))))
+      .attr('y', (d) => y(d.dev) + sb(s.key)).attr('height', sb.bandwidth()).attr('rx', 3)
+      .style('fill', (d) => (typeof s.color === 'function' ? s.color(d) : s.color)));
+    g.append('rect').attr('x', 0).attr('width', W).attr('y', (d) => y(d.dev)).attr('height', y.bandwidth()).style('fill', 'transparent')
+      .on('mousemove', (ev, d) => showTip(el, ev, `<div class="t">${esc(d.dev)}</div>${series.map((s) => `${series.length > 1 ? `<i style="background:${typeof s.color === 'function' ? s.color(d) : s.color}"></i>` : ''}${esc(s.label)}: ${esc(ltr(o.fmt(d[s.key])))}`).join('<br>')}`))
+      .on('mouseleave', () => hideTip(el));
+    const k = series[0].key;
+    g.append('text').attr('x', (d) => (nn(d[k]) ? x(0) : Math.min(x(0), x(d[k]))) - 5).attr('y', (d) => y(d.dev) + (series.length > 1 ? sb(k) + sb.bandwidth() / 2 : y.bandwidth() / 2)).attr('dy', '.35em')
+      .style('direction', 'rtl').style('unicode-bidi', 'embed').attr('text-anchor', 'start').style('fill', 'var(--color-fg)').text((d) => (nn(d[k]) ? 'אין נתון' : o.label(d)));
+  }
+  const item = (d, f) => ({ dev: d, P1: row(d, 'P1')[f] ?? null, P2: row(d, 'P2')[f] ?? null, P3: row(d, 'P3')[f] ?? null, ALL: row(d, 'ALL')[f] ?? null, r: row(d, 'ALL'), n: row(d, 'P3') });
+  const three = [{ key: 'P3', label: PL.P3, color: C.now }, { key: 'P2', label: PL.P2, color: C.mid }, { key: 'P1', label: PL.P1, color: C.old }];
+  const two = three.slice(0, 2);
+  const devColor = (d) => color(d.dev);
+
+  // ---------- pricing map ----------
+  (() => {
+    const el = $('map-chart'); el.innerHTML = '';
+    const W = Math.max(300, el.clientWidth), H = W < 560 ? 460 : 420, m = { t: 26, r: 24, b: 44, l: 52 };
+    const has = (r) => r && !nn(r.med_vs_app) && !nn(r.med_gap);
+    const pts0 = devs.map((d) => ({ d, now: row(d, 'P3'), prev: row(d, 'P2') }));
+    const shown = pts0.filter((p) => has(p.now));
+    const all = pts0.flatMap((p) => [p.now, p.prev]).filter(has);
+    const x = d3.scaleLinear([Math.min(0, d3.min(all, (r) => r.med_vs_app)), Math.max(0, d3.max(all, (r) => r.med_vs_app))], [m.l, W - m.r]).nice();
+    const y = d3.scaleLinear([0, d3.max(all, (r) => r.med_gap) || 1], [H - m.b, m.t]).nice();
+    const rad = d3.scaleSqrt([0, d3.max(shown, (p) => p.now.total_m) || 1], [6, Math.min(34, W / 28)]);
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    svg.append('defs').append('marker').attr('id', 'mk-arr').attr('viewBox', '0 0 10 10').attr('refX', 9).attr('refY', 5).attr('markerWidth', 7).attr('markerHeight', 7).attr('orient', 'auto').append('path').attr('d', 'M0,1L10,5L0,9z').style('fill', 'var(--color-fg-muted)');
+    svg.append('g').selectAll('line').data(y.ticks(5)).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', (v) => y(v)).attr('y2', (v) => y(v)).style('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(y.ticks(5)).join('text').attr('x', m.l - 6).attr('y', (v) => y(v)).attr('dy', '.35em').attr('text-anchor', 'end').text((v) => f0(v) + '%');
+    svg.append('g').selectAll('text').data(x.ticks(6)).join('text').attr('x', (v) => x(v)).attr('y', H - m.b + 16).attr('text-anchor', 'middle').text((v) => ltr(sg(v)));
+    svg.append('text').attr('x', (m.l + W - m.r) / 2).attr('y', H - 6).attr('text-anchor', 'middle').text('זכייה מול השומה (חציון)');
+    svg.append('text').attr('x', 4).attr('y', m.t - 12).attr('text-anchor', 'start').text('פער מההצעה השנייה');
+    // quadrants, split by the appraisal (x=0) and the peer median gap
+    const my = d3.median(shown, (p) => p.now.med_gap), mx = d3.median(shown, (p) => p.now.med_vs_app);
+    const qy = nn(my) ? (H - m.b + m.t) / 2 : y(my);
+    const quad = (xx, yy, anchor, t) => svg.append('text').attr('class', 'quad').attr('x', xx).attr('y', yy).attr('text-anchor', anchor).text(t);
+    if (W >= 560) {
+      quad(m.l + 6, qy + 16, 'start', 'משמעת: זול מהשומה, פער קטן');
+      quad(m.l + 6, m.t + 12, 'start', 'זול, אבל משאיר כסף');
+      quad(W - m.r - 6, m.t + 12, 'end', 'לחץ: מעל השומה, פער גדול');
+      quad(W - m.r - 6, qy + 16, 'end', 'יקר אבל מדויק');
+    }
+    if (!nn(my)) { svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', qy).attr('y2', qy).style('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '5 4'); svg.append('text').attr('x', m.l + 6).attr('y', qy - 5).attr('text-anchor', 'start').text(`חציון ${f1(my)}%`); }
+    if (!nn(mx)) svg.append('line').attr('x1', x(mx)).attr('x2', x(mx)).attr('y1', m.t).attr('y2', H - m.b).style('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '5 4');
+    svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', m.t).attr('y2', H - m.b).style('stroke', C.crit).attr('stroke-width', 1.5);
+    svg.append('text').attr('x', x(0) + 4).attr('y', H - m.b - 24).attr('text-anchor', 'start').style('fill', C.crit).text('השומה');
+    const order = [...shown].sort((a, b) => (S.focus === a.d) - (S.focus === b.d) || b.now.total_m - a.now.total_m);
+    const g = svg.append('g').selectAll('g').data(order).join('g').attr('opacity', (p) => op(p.d)).style('cursor', 'pointer').on('click', (ev, p) => setFocus(p.d));
+    g.filter((p) => has(p.prev)).append('line').each(function (p) {
+      const x1 = x(p.prev.med_vs_app), y1 = y(p.prev.med_gap), x2 = x(p.now.med_vs_app), y2 = y(p.now.med_gap);
+      const len = Math.hypot(x2 - x1, y2 - y1), cut = rad(p.now.total_m) + 2;
+      if (len <= cut + 4) return;
+      d3.select(this).attr('x1', x1).attr('y1', y1).attr('x2', x2 - (x2 - x1) / len * cut).attr('y2', y2 - (y2 - y1) / len * cut).style('stroke', 'var(--color-fg-muted)').style('stroke-opacity', 0.6).attr('stroke-width', 1.2).attr('marker-end', 'url(#mk-arr)');
+    });
+    g.filter((p) => has(p.prev)).append('circle').attr('cx', (p) => x(p.prev.med_vs_app)).attr('cy', (p) => y(p.prev.med_gap)).attr('r', 3).style('fill', 'none').style('stroke', (p) => color(p.d));
+    g.append('circle').attr('cx', (p) => x(p.now.med_vs_app)).attr('cy', (p) => y(p.now.med_gap)).attr('r', (p) => rad(p.now.total_m)).style('fill', (p) => color(p.d)).attr('fill-opacity', 0.5).style('stroke', (p) => color(p.d)).attr('stroke-width', 1.5)
+      .on('mousemove', (ev, p) => showTip(el, ev, `<div class="t">${esc(p.d)} \u200F·\u200F 12 החודשים האחרונים</div>מול השומה ${esc(ltr(sg(p.now.med_vs_app)))}<br>פער מהשנייה ${esc(pct(p.now.med_gap))}<br>${esc(mil(p.now.total_m))} מ׳ ₪ \u200F·\u200F ${p.now.lots} מגרשים${has(p.prev) ? `<div class="t">לפני: ${esc(ltr(sg(p.prev.med_vs_app)))} \u200F·\u200F ${esc(pct(p.prev.med_gap))}</div>` : ''}`))
+      .on('mouseleave', () => hideTip(el));
+    // labels: beside the bubble, flipped at the edge, nudged down on collision
+    const placed = [];
+    g.append('text').attr('class', 'lab').each(function (p) {
+      const t = d3.select(this).text(p.d), tw = this.getComputedTextLength(), r = rad(p.now.total_m);
+      let lx = x(p.now.med_vs_app) + r + 4, anchor = 'start';
+      if (lx + tw > W - m.r) { lx = x(p.now.med_vs_app) - r - 4; anchor = 'end'; }
+      let ly = y(p.now.med_gap);
+      const box = () => (anchor === 'start' ? [lx, lx + tw] : [lx - tw, lx]);
+      while (placed.some((q) => Math.abs(q.y - ly) < 13 && !(box()[1] < q.x0 || box()[0] > q.x1))) ly += 13;
+      const [x0, x1] = box(); placed.push({ x0, x1, y: ly });
+      t.attr('x', lx).attr('y', ly).attr('dy', '.35em').attr('text-anchor', anchor);
+    });
+    const miss = pts0.filter((p) => !has(p.now)).map((p) => p.d);
+    $('map-missing').textContent = miss.length ? `אין נתון ל־12 החודשים האחרונים (חסרה שומה או הצעה שנייה תקינה): ${miss.join(', ')}.` : '';
+  })();
+
+  // ---------- ranking ----------
+  if (R.status === 'ok') {
+    const tb = $('rank-table').querySelector('tbody'); tb.replaceChildren();
+    const n = R.data.length;
+    const heat = (rk) => (rk <= 2 ? 'color-mix(in srgb, var(--color-ok) 15%, transparent)' : rk > n - 2 ? 'color-mix(in srgb, var(--color-bad) 15%, transparent)' : 'transparent');
+    const fv = { total_m: (v) => mil(v), lots: f0, places: f0, med_vs_app: (v) => ltr(sg(v)), med_gap: pct, med_bids: f1 };
+    for (const o of R.data) {
+      const tr = document.createElement('tr'); tr.dataset.key = o.developer; tr.tabIndex = 0;
+      if (S.focus) tr.className = S.focus === o.developer ? 'hi' : 'dim';
+      tr.addEventListener('click', () => setFocus(o.developer));
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFocus(o.developer); } });
+      const td = (t, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; if (t instanceof Node) c.append(t); else c.innerHTML = html(t); tr.append(c); return c; };
+      td(o.final_rank, 'rk');
+      const nm = document.createElement('span'); const dot = document.createElement('i'); dot.className = 'dot'; dot.style.background = color(o.developer); nm.append(dot, o.developer); td(nm);
+      for (const f of ['total_m', 'lots', 'places', 'med_vs_app', 'med_gap', 'med_bids']) { const c = td(`${o['rank_' + f]} \u200F·\u200F ${fv[f](o['val_' + f])}`, 'n'); c.style.background = heat(o['rank_' + f]); }
+      td(f1(o.avg_rank), 'n');
+      tb.append(tr);
+    }
+  }
+
+  // ---------- scale & mix ----------
+  legend('leg-win', three.map((s) => [s.label, s.color]));
+  hbars('c-win', devs.map((d) => item(d, 'total_m')), three, { fmt: mil, tick: f0, label: (d) => `${mil(d.P3)} \u200F·\u200F ${sg(d.n.chg_pct_total_m)}` });
+  (() => {
+    const el = $('c-mix'); el.innerHTML = '';
+    const parts = [['free_m', 'שוק חופשי', dash.colors[0]], ['prog_m', 'מחיר מטרה / למשתכן', dash.colors[2]], ['rent_m', 'דיור להשכרה', dash.colors[4]]];
+    legend('leg-mix', parts.map(([, l, c]) => [l, c]));
+    const items = devs.map((d) => row(d, 'ALL')).sort((a, b) => b.total_m - a.total_m);
+    const W = Math.max(280, el.clientWidth), H = items.length * 26 + 26;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const lab = (r) => `${mil(r.total_m)} \u200F·\u200F ${pct(r.prog_share_pct)}`;
+    const nameW = Math.min(W * 0.34, textW(svg, devs) + 10), labW = Math.min(W * 0.3, textW(svg, items.map(lab), '') + 10);
+    const x = d3.scaleLinear([0, d3.max(items, (r) => r.total_m) || 1], [W - nameW, labW]).nice();
+    const y = d3.scaleBand(items.map((r) => r.developer), [4, H - 22]).padding(0.28);
+    svg.append('g').selectAll('text').data(x.ticks(W < 520 ? 3 : 4)).join('text').attr('x', (v) => x(v)).attr('y', H - 6).attr('text-anchor', 'middle').text(f0);
+    const g = svg.append('g').selectAll('g').data(items).join('g').attr('opacity', (r) => op(r.developer)).style('cursor', 'pointer').on('click', (ev, r) => setFocus(r.developer));
+    g.append('text').attr('class', 'lab').attr('x', W - 2).attr('y', (r) => y(r.developer) + y.bandwidth() / 2).attr('dy', '.35em').attr('text-anchor', 'end').text((r) => r.developer);
+    g.each(function (r) {
+      let acc = 0; const gg = d3.select(this);
+      for (const [f, l, c] of parts) {
+        const v = r[f] || 0; if (!v) continue;
+        gg.append('rect').attr('x', x(acc + v)).attr('width', Math.max(1, x(acc) - x(acc + v))).attr('y', y(r.developer)).attr('height', y.bandwidth()).style('fill', c)
+          .on('mousemove', (ev) => showTip(el, ev, `<div class="t">${esc(r.developer)}</div><i style="background:${c}"></i>${esc(l)}: ${esc(mil(v))} מ׳ ₪ (${esc(pct(v / r.total_m * 100))})`)).on('mouseleave', () => hideTip(el));
+        acc += v;
+      }
+      gg.append('text').attr('x', x(acc) - 5).attr('y', y(r.developer) + y.bandwidth() / 2).attr('dy', '.35em').style('direction', 'rtl').style('unicode-bidi', 'embed').attr('text-anchor', 'start').style('fill', 'var(--color-fg)').text(lab(r));
+    });
+  })();
+  hbars('c-devshare', devs.map((d) => item(d, 'dev_share_pct')), [{ key: 'ALL', label: 'חלק הפיתוח', color: devColor }], { fmt: pct, tick: (v) => f0(v) + '%', ref: row(G, 'ALL').dev_share_pct, label: (d) => `${pct(d.ALL)} \u200F·\u200F ${mil(d.r.dev_m)} מ׳ ₪` });
+
+  // ---------- price ----------
+  legend('leg-vs', three.map((s) => [s.label, s.color]));
+  hbars('c-vsapp', devs.map((d) => item(d, 'med_vs_app')), three, { fmt: sg, tick: sg, ref: 0, refColor: C.crit, label: (d) => `${sg(d.P3)} \u200F·\u200F ${pts(d.n.chg_med_vs_app)}` });
+  hbars('c-unit', devs.map((d) => item(d, 'k_per_unit')), [{ key: 'ALL', label: 'אלפי ₪ ליח״ד', color: devColor }], { fmt: f0, tick: f0, ref: row(G, 'ALL').k_per_unit, label: (d) => `${f0(d.ALL)} \u200F·\u200F ${f0(d.r.units)} יח״ד` });
+
+  // ---------- competition ----------
+  legend('leg-gap', two.map((s) => [s.label, s.color]));
+  hbars('c-gap', devs.map((d) => item(d, 'med_gap')), two, { fmt: pct, tick: (v) => f0(v) + '%', ref: row(G, 'P3').med_gap, label: (d) => `${pct(d.P3)} \u200F·\u200F ${mil(d.n.left_m)} מ׳ ₪` });
+  hbars('c-single', devs.map((d) => item(d, 'single_bid')), [{ key: 'ALL', label: 'הצעה יחידה', color: devColor }], { fmt: f0, tick: f0, label: (d) => `${f0(d.ALL)} \u200F·\u200F ${pct(d.r.single_share_pct)}` });
+  hbars('c-bids', devs.map((d) => item(d, 'med_bids')), [{ key: 'ALL', label: 'חציון מתחרים', color: devColor }], { fmt: f1, tick: f0, ref: row(G, 'ALL').med_bids, label: (d) => `${f1(d.ALL)} \u200F·\u200F ${f0(d.r.lots)} מגרשים` });
+
+  // ---------- insights ----------
+  const il = $('ins-list'); il.replaceChildren();
+  if (I.status === 'ok') for (const x of I.data) {
+    const li = document.createElement('li'); li.style.opacity = op(x.developer, 0.45);
+    const p = document.createElement('span'); p.className = 'pill ' + x.tone; p.textContent = x.pill;
+    const t = document.createElement('span'); t.className = 'x';
+    const main = document.createElement('span'); main.dataset.source = 'insights'; main.dataset.field = 'text'; main.dataset.where = 'id=' + x.id; main.textContent = x.text;
+    const so = document.createElement('span'); so.className = 'so'; so.dataset.source = 'insights'; so.dataset.field = 'so'; so.dataset.where = 'id=' + x.id; so.textContent = x.so;
+    t.append(main, so); li.append(p, t); il.append(li);
+  }
+
+  // ---------- tender terms cards ----------
+  const tc = $('tcards'); tc.replaceChildren();
+  if (TB.status === 'ok') for (const d of devs) {
+    const r = TB.data.find((x) => x.developer === d); if (!r) continue;
+    const card = document.createElement('article'); card.className = 'tcard' + (S.focus && S.focus !== d ? ' dim' : ''); card.tabIndex = 0;
+    card.addEventListener('click', (e) => { if (!e.target.closest('a')) setFocus(d); });
+    const h = document.createElement('h3'); const i = document.createElement('i'); i.style.background = color(d); h.append(i, d);
+    const dl = document.createElement('dl');
+    const kv = (k, field, v) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.dataset.source = 'terms_by_dev'; dd.dataset.field = field; dd.dataset.where = 'developer=' + enc(d); dd.textContent = v; dl.append(dt, dd); };
+    kv('מכרזים \u200F·\u200F מגרשים', 'tenders', `${f0(r.tenders)} \u200F·\u200F ${f0(r.lots)}`);
+    kv('סוגי מכרז', 'types', r.types);
+    kv('מחיר סף מול שומה', 'med_reserve_pct', nn(r.med_reserve_pct) ? 'אין נתון' : r.med_reserve_pct < 0.01 ? 'סמלי (1 ₪ במקור)' : `חציון ${pct(r.med_reserve_pct)}`);
+    kv('מגבלת מגרש אחד למציע', 'capped_lots', `${f0(r.capped_lots)} מתוך ${f0(r.lots)} מגרשים`);
+    kv('הוצאות פיתוח', 'dev_m', `${mil(r.dev_m)} מ׳ ₪`);
+    const ul = document.createElement('ul');
+    for (const t of r.top) { const li = document.createElement('li'); const a = document.createElement('a'); a.href = t.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = `${t.tender} \u200F·\u200F ${t.place}`; const v = document.createElement('span'); v.textContent = `${mil(t.total)} מ׳ ₪ \u200F·\u200F ${t.lots} מג׳`; li.append(a, v); ul.append(li); }
+    card.append(h, dl, ul); tc.append(card);
+  }
+
+  // ---------- all-data explorer ----------
+  const M = [
+    ['היקף', [['total_m', 'זכיות כולל פיתוח (מ׳ ₪)', mil], ['win_m', 'סכום הזכייה (מ׳ ₪)', mil], ['dev_m', 'הוצאות פיתוח (מ׳ ₪)', mil], ['lots', 'מגרשים שנזכו', f0], ['joint_m', 'זכיות במשותף, סכום מלא (מ׳ ₪)', mil], ['tenders', 'מכרזים', f0]]],
+    ['תמהיל', [['free_m', 'שוק חופשי (מ׳ ₪)', mil], ['prog_m', 'מחיר מטרה / למשתכן (מ׳ ₪)', mil], ['rent_m', 'דיור להשכרה (מ׳ ₪)', mil], ['prog_share_pct', 'חלק מחיר מטרה', pct], ['dev_share_pct', 'חלק הוצאות הפיתוח', pct]]],
+    ['מחיר', [['med_vs_app', 'חציון זכייה מול שומה', sg], ['k_per_unit', 'אלפי ₪ ליחידת דיור', f0], ['units', 'יחידות דיור מיוחסות', f0]]],
+    ['תחרות', [['med_gap', 'חציון פער מההצעה השנייה', pct], ['left_m', 'כסף על השולחן (מ׳ ₪)', mil], ['med_bids', 'חציון הצעות תקינות למגרש', f1], ['single_bid', 'זכיות בהצעה יחידה', f0]]],
+    ['פריסה וריכוז', [['places', 'יישובים', f0], ['regions', 'מרחבים', f0], ['top_tender_share_pct', 'חלק המכרז הגדול', pct]]],
+  ];
+  const flat = M.flatMap(([, ms]) => ms);
+  const sel = $('metric');
+  if (!sel.options.length) { for (const [grp, ms] of M) { const og = document.createElement('optgroup'); og.label = grp; ms.forEach(([k, l]) => og.append(new Option(l, k))); sel.append(og); } sel.addEventListener('change', () => window.DV.redraw()); }
+  const [mk, ml, mf] = flat.find((x) => x[0] === sel.value) || flat[0];
+  const isPts = ['med_vs_app', 'med_gap', 'dev_share_pct', 'prog_share_pct', 'top_tender_share_pct'].includes(mk);
+  (() => {
+    const el = $('c-all'); el.innerHTML = '';
+    const ps = ['P1', 'P2', 'P3'];
+    const series = devs.map((d) => ({ d, v: ps.map((p) => ({ p, v: row(d, p)[mk] ?? null })) }));
+    const vs = series.flatMap((s) => s.v.map((x) => x.v)).filter((v) => !nn(v));
+    const W = Math.max(300, el.clientWidth), H = 280;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const y = d3.scaleLinear([Math.min(0, d3.min(vs) ?? 0), Math.max(0, d3.max(vs) ?? 1)], [H - 30, 14]).nice();
+    const tickW = textW(svg, y.ticks(4).map((v) => mf(v)), '') + 10;
+    const ends = series.map((s) => ({ d: s.d, v: s.v[2].v })).filter((e) => !nn(e.v));
+    const endW = Math.min(W * 0.36, textW(svg, ends.map((e) => `${e.d}  ${mf(e.v)}`)) + 16);
+    // the time axis runs left to right, as in any Hebrew financial chart; names sit after the latest point
+    const x = d3.scalePoint(ps, [tickW + 10, W - endW]).padding(0.08);
+    svg.append('g').selectAll('line').data(y.ticks(4)).join('line').attr('x1', tickW).attr('x2', W - endW + 6).attr('y1', (v) => y(v)).attr('y2', (v) => y(v)).style('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('x', tickW - 6).attr('y', (v) => y(v)).attr('dy', '.35em').attr('text-anchor', 'end').text((v) => mf(v));
+    svg.append('g').selectAll('text').data(ps).join('text').attr('x', (p) => x(p)).attr('y', H - 8).attr('text-anchor', 'middle').text((p) => PL[p]);
+    if (mk === 'med_vs_app') { svg.append('line').attr('x1', tickW).attr('x2', W - endW + 6).attr('y1', y(0)).attr('y2', y(0)).style('stroke', C.crit).attr('stroke-dasharray', '4 3'); svg.append('text').attr('x', tickW + 4).attr('y', y(0) - 5).attr('text-anchor', 'start').style('fill', C.crit).text('השומה'); }
+    const line = d3.line().defined((d) => !nn(d.v)).x((d) => x(d.p)).y((d) => y(d.v));
+    const ordered = [...series].sort((a, b) => (S.focus === a.d) - (S.focus === b.d));
+    const g = svg.append('g').selectAll('g').data(ordered).join('g').attr('opacity', (s) => op(s.d));
+    g.append('path').attr('d', (s) => line(s.v)).style('fill', 'none').style('stroke', (s) => (S.focus && S.focus !== s.d ? 'var(--cds-chart-muted)' : color(s.d))).attr('stroke-width', (s) => (S.focus === s.d ? 3 : 2)).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+    g.selectAll('circle').data((s) => s.v.filter((d) => !nn(d.v)).map((d) => ({ ...d, d: s.d }))).join('circle').attr('cx', (d) => x(d.p)).attr('cy', (d) => y(d.v)).attr('r', 3.2).style('fill', (d) => color(d.d));
+    ends.sort((a, b) => y(a.v) - y(b.v));
+    let prevY = -Infinity; ends.forEach((e) => { e.y = Math.max(y(e.v), prevY + 13); prevY = e.y; });
+    const over = prevY - (H - 34); if (over > 0) ends.forEach((e) => { e.y -= over; });
+    svg.append('g').selectAll('text').data(ends).join('text').attr('class', 'lab').attr('x', x('P3') + 10).attr('y', (e) => e.y).attr('dy', '.35em').style('direction', 'rtl').style('unicode-bidi', 'embed').attr('text-anchor', 'end').attr('opacity', (e) => op(e.d)).style('fill', (e) => color(e.d)).text((e) => `${e.d}  ${ltr(mf(e.v))}`);
+    const rule = svg.append('line').attr('y1', 14).attr('y2', H - 30).style('stroke', 'var(--cds-chart-axis)').attr('visibility', 'hidden');
+    svg.append('rect').attr('x', tickW).attr('width', W - tickW - endW).attr('y', 0).attr('height', H - 30).style('fill', 'transparent')
+      .on('mousemove', function (ev) {
+        const [mx2, my2] = d3.pointer(ev, this); const p = ps.reduce((a, b) => (Math.abs(x(b) - mx2) < Math.abs(x(a) - mx2) ? b : a));
+        rule.attr('x1', x(p)).attr('x2', x(p)).attr('visibility', 'visible');
+        const list = series.map((s) => ({ d: s.d, v: s.v.find((q) => q.p === p).v })).filter((q) => !nn(q.v)).sort((a, b) => b.v - a.v);
+        showTip(el, ev, `<div class="t">${esc(PL[p])} \u200F·\u200F ${esc(ml)}</div>${list.map((q) => `<i style="background:${color(q.d)}"></i>${esc(q.d)}: ${esc(ltr(mf(q.v)))}`).join('<br>')}`);
+        S._near = series.map((s) => ({ d: s.d, v: s.v.find((q) => q.p === p).v })).filter((q) => !nn(q.v)).sort((a, b) => Math.abs(y(a.v) - my2) - Math.abs(y(b.v) - my2))[0]?.d;
+      })
+      .on('mouseleave', () => { rule.attr('visibility', 'hidden'); hideTip(el); })
+      .on('click', () => { if (S._near) setFocus(S._near); });
+  })();
+  if (Wd.status === 'ok') {
+    const tb = $('all-table').querySelector('tbody'); tb.replaceChildren();
+    const list = Wd.data.filter((r) => r.metric === mk).sort((a, b) => (a.developer === G) - (b.developer === G) || devs.indexOf(a.developer) - devs.indexOf(b.developer));
+    for (const r of list) {
+      const tr = document.createElement('tr'); tr.dataset.key = r.key; tr.tabIndex = 0;
+      if (S.focus) tr.className = S.focus === r.developer ? 'hi' : r.developer === G ? '' : 'dim';
+      if (r.developer !== G) tr.addEventListener('click', () => setFocus(r.developer));
+      const td = (t, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.innerHTML = html(t); tr.append(c); return c; };
+      td(r.developer);
+      for (const p of ['P1', 'P2', 'P3']) td(nn(r[p]) ? 'אין נתון' : ltr(mf(r[p])), 'n');
+      const c = td(nn(r.chg) ? 'אין נתון' : isPts ? pts(r.chg) : ltr((r.chg > 0 ? '+' : r.chg < 0 ? '−' : '') + mf(Math.abs(r.chg))), 'n');
+      if (!nn(r.chg) && r.chg && ['med_vs_app', 'med_gap', 'left_m'].includes(mk)) c.className = 'n ' + (r.chg < 0 ? 'good' : 'bad');
+      tb.append(tr);
+    }
+  }
+  const named = location.hash && document.getElementById(location.hash.slice(1));
+  if (named && !S._jumped) { S._jumped = true; named.scrollIntoView(); }
+};
+dash.onData(() => window.DV.redraw());
+
+document.getElementById('m-cov') && (document.getElementById('m-cov').textContent = window.EMBED.meta.tenders_fetched.toLocaleString('he-IL'));
+</script>

@@ -1,0 +1,53 @@
+<title>מפת רכישות יזמים</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Heebo:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+/* Shell: navy brand band holding the header, ivory workspace, tokens for both themes.
+   The page below is written against these token names, so it runs the same here and in the Dashboard version. */
+:root{
+  --font-anthropic-serif:"Frank Ruhl Libre","David Libre",Georgia,serif;
+  --font-anthropic-sans:"Heebo","Segoe UI",Arial,sans-serif;
+  --frame:#0A1A3F; --frame2:#12306E; --on-frame:#FFFFFF; --on-frame2:#C9D6FF;
+  --color-bg:#FBFAF6; --color-panel:#FFFFFF; --color-fg:#17213A; --color-fg-muted:#5E677B; --color-border-line:#E7E3D9;
+  --color-ok:#17714F; --color-warn:#9A6700; --color-bad:#B23A48;
+  --cds-chart-grid:#EFECE4; --cds-chart-axis:#B9B4A8; --cds-chart-reference:#8C8677; --cds-chart-muted:#C9C5BB; --cds-chart-status-critical:#C23B4B;
+  --cds-surface-popover:#FFFFFF; --cds-border:#E1DDD2; --cds-shadow-popover:0 6px 24px rgba(10,26,63,.12); --cds-text-secondary:#5E677B;
+  --s1:#1F4FB4; --s2:#0F8B8D; --s3:#C47A10; --s4:#8B4BA8; --s5:#2F8F4E; --s6:#C4513F; --s7:#4F6687; --s8:#9C7A3C;
+  --cds-font-size-caption:12px; --cds-font-size-body:14px; --cds-font-size-heading:17px; --cds-font-size-title:30px; --cds-font-weight-medium:600;
+  --cds-gap-xs:4px; --cds-gap-sm:8px; --cds-gap-md:14px; --cds-gap-lg:22px; --cds-gap-xl:34px;
+  --cds-pad-xs:6px; --cds-pad-sm:10px; --cds-pad-md:14px; --cds-pad-lg:20px; --cds-radius:6px; --cds-dur-slow:.3s;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --color-bg:#0D1324; --color-panel:#141C31; --color-fg:#E8ECF6; --color-fg-muted:#9BA6BF; --color-border-line:#26304B;
+  --color-ok:#52C08E; --color-warn:#E3B04F; --color-bad:#EA7A86;
+  --cds-chart-grid:#1E2740; --cds-chart-axis:#46506B; --cds-chart-reference:#7F89A3; --cds-chart-muted:#3A4462; --cds-chart-status-critical:#EF6B79;
+  --cds-surface-popover:#18213A; --cds-border:#2C3756; --cds-shadow-popover:0 8px 28px rgba(0,0,0,.45); --cds-text-secondary:#9BA6BF;
+  --s1:#7EA2FF; --s2:#4CC9C4; --s3:#EFAE4E; --s4:#C58BE0; --s5:#6CCB86; --s6:#F08A78; --s7:#A2B3D1; --s8:#D6B36F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --color-bg:#0D1324; --color-panel:#141C31; --color-fg:#E8ECF6; --color-fg-muted:#9BA6BF; --color-border-line:#26304B;
+  --color-ok:#52C08E; --color-warn:#E3B04F; --color-bad:#EA7A86;
+  --cds-chart-grid:#1E2740; --cds-chart-axis:#46506B; --cds-chart-reference:#7F89A3; --cds-chart-muted:#3A4462; --cds-chart-status-critical:#EF6B79;
+  --cds-surface-popover:#18213A; --cds-border:#2C3756; --cds-shadow-popover:0 8px 28px rgba(0,0,0,.45); --cds-text-secondary:#9BA6BF;
+  --s1:#7EA2FF; --s2:#4CC9C4; --s3:#EFAE4E; --s4:#C58BE0; --s5:#6CCB86; --s6:#F08A78; --s7:#A2B3D1; --s8:#D6B36F; color-scheme:dark}
+html,body{background:var(--color-bg)}
+body{margin:0;color:var(--color-fg);font-family:var(--font-anthropic-sans);-webkit-font-smoothing:antialiased}
+#dash-root{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+/* brand band: the header sits on navy, full bleed */
+.dv > header{background:linear-gradient(100deg,var(--frame),var(--frame2));color:var(--on-frame);margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:28px max(16px,env(safe-area-inset-left,0px)) 22px;border-bottom:1px solid #2C3A78}
+.dv > header > *{max-width:1280px;margin-inline:auto}
+.dv > header h1{color:#fff;font-size:34px;letter-spacing:-.01em}
+.dv > header .sub{color:var(--on-frame2)}
+.dv > header .take{color:#E7ECFA;font-size:15px}
+.dv > header .take b{color:#fff}
+.dv > header .chip{background:transparent;color:#E7ECFA;border-color:#ffffff38}
+.dv > header .chip[aria-pressed="true"]{background:#fff;color:var(--frame);border-color:#fff;box-shadow:none}
+.dv > header .nav button{color:var(--on-frame2)}
+.dv > header .nav button:hover{color:#fff;border-bottom-color:#fff}
+.dv .kpi .v{font-size:32px;line-height:1.15}
+.dv h2{font-family:var(--font-anthropic-serif);font-weight:500;font-size:22px}
+.dv .card,.dv .kpi,.dv .tcard{box-shadow:0 1px 0 rgba(10,26,63,.03)}
+.brandfoot{max-width:1280px;margin:28px auto 0;font-size:12px;color:var(--color-fg-muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+</style>

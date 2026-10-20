@@ -1,0 +1,98 @@
+
+
+<div class="dv" id="top">
+  <header id="head">
+    <h1>מי קונה קרקע במשמעת, ומי משלם ביוקר</h1>
+    <p class="sub" id="scope" data-source="lots">—</p>
+    <p class="take dash-skeleton" id="takeaway" data-source="by_dev_period ranking">—</p>
+    <div class="chips" id="focus" role="group" aria-label="מיקוד ביזם" data-source="by_dev_period"></div>
+    <nav class="nav" id="nav" aria-label="ניווט"></nav>
+  </header>
+
+  <section class="sec" id="snapshot" aria-labelledby="snap-h">
+    <div class="sechead"><h2 id="snap-h">תמונת מצב</h2><span class="sub" id="snap-sub"></span></div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section class="card sec" id="map" aria-labelledby="map-h">
+    <div><h2 id="map-h">מפת תמחור</h2>
+    <p class="note">12 החודשים האחרונים. ציר אופקי: חציון הזכייה מול שומת המגרש (ימינה: מעל השומה). ציר אנכי: חציון הפער מההצעה התקינה השנייה, הכסף שנשאר על השולחן. גודל העיגול: זכיות כולל הוצאות פיתוח. החץ יוצא מהמיקום ב־12 החודשים שלפני. קו אדום: השומה. קווים מקווקווים: חציון היזמים. רבעים: שמאל־למטה משמעת, ימין־למעלה לחץ.</p></div>
+    <div class="chart" id="map-chart" data-source="by_dev_period" style="min-height:400px"></div>
+    <p class="note" id="map-missing"></p>
+  </section>
+
+  <section class="card sec" id="rank" aria-labelledby="rank-h">
+    <div class="sechead"><h2 id="rank-h">דירוג עוצמת רכישה</h2><span class="mine">שקלול שלי, לא מדד מקובל</span></div>
+    <p class="note">כל התקופה. בכל מדד מקום 1 הוא הטוב לרוכש: היקף, מספר מגרשים ופריסה גבוהים; מחיר נמוך מול השומה; פער קטן מההצעה השנייה; ויותר מתחרים במגרשים שבהם זכה. הציון: ממוצע הדירוגים במשקל שווה. ירוק: שני הראשונים במדד; אדום: שני האחרונים. לחיצה על שורה ממקדת.</p>
+    <div class="tw"><table id="rank-table" data-source="ranking" data-row-key="developer"><thead><tr>
+      <th data-field="final_rank">מקום</th><th data-field="developer">יזם</th>
+      <th data-field="rank_total_m" class="n">היקף</th><th data-field="rank_lots" class="n">מגרשים</th><th data-field="rank_places" class="n">יישובים</th>
+      <th data-field="rank_med_vs_app" class="n">מול שומה</th><th data-field="rank_med_gap" class="n">פער מהשנייה</th><th data-field="rank_med_bids" class="n">מתחרים</th>
+      <th data-field="avg_rank" class="n">ממוצע</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="sec" id="scale" aria-labelledby="scale-h">
+    <h2 id="scale-h">היקף ותמהיל</h2>
+    <p class="lede">ההיקף קובע את משקל היזם בשוק הקרקע, והתמהיל קובע על איזה ביקוש הוא נשען: שוק חופשי מתומחר לפי הקונים, מחיר מטרה לפי המדינה.</p>
+    <div class="grid">
+      <div class="card"><h3>זכיות לפי תקופה</h3><p class="note">מיליוני ₪ כולל הוצאות פיתוח. התווית: 12 החודשים האחרונים · השינוי מהשנה שלפני. התקופה הראשונה חלקית.</p><div class="legend" id="leg-win"></div><div class="chart" id="c-win" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>שוק חופשי מול מחיר מטרה ודיור להשכרה</h3><p class="note">מיליוני ₪ כולל פיתוח, כל התקופה. התווית: סך · חלק מחיר מטרה.</p><div class="legend" id="leg-mix"></div><div class="chart" id="c-mix" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>חלק הוצאות הפיתוח בעלות הקרקע</h3><p class="note">הוצאות פיתוח חלקי סכום הזכייה ועוד הפיתוח, כל התקופה. קו: כל היזמים יחד.</p><div class="chart" id="c-devshare" data-source="by_dev_period"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="price" aria-labelledby="price-h">
+    <h2 id="price-h">מחיר ומשמעת</h2>
+    <p class="lede">שומת רמ״י היא העוגן. יזם שזוכה הרבה מתחת לשומה קונה בזול; יזם שמתקרב אליה או עובר אותה מתמחר עתיד אופטימי ומקטין את המרווח שלו.</p>
+    <div class="grid">
+      <div class="card"><h3>זכייה מול שומה לאורך זמן</h3><p class="note">חציון לכל תקופה. קו אדום: השומה. התווית: 12 החודשים האחרונים · השינוי בנקודות.</p><div class="legend" id="leg-vs"></div><div class="chart" id="c-vsapp" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>מחיר קרקע ליחידת דיור</h3><p class="note">סכום הזכייה ועוד פיתוח, חלקי יחידות הדיור, רק במכרזים שבהם היזם זכה בכל המגרשים. אלפי ₪ ליח״ד, כל התקופה.</p><div class="chart" id="c-unit" data-source="by_dev_period"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="comp" aria-labelledby="comp-h">
+    <h2 id="comp-h">תחרות וכסף על השולחן</h2>
+    <p class="lede">הפער מההצעה השנייה הוא כסף ששולם בלי צורך. פער קבוע וגדול מעיד על תמחור לפי הצורך של היזם, לא לפי השוק; זכיות בהצעה יחידה מעידות על בחירת מגרשים שאחרים לא רצו.</p>
+    <div class="grid">
+      <div class="card"><h3>חציון הפער מההצעה השנייה</h3><p class="note">אחוזים. קו: חציון כל היזמים ב־12 החודשים האחרונים. התווית: 12 החודשים האחרונים · כסף על השולחן במיליוני ₪.</p><div class="legend" id="leg-gap"></div><div class="chart" id="c-gap" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>זכיות בהצעה יחידה</h3><p class="note">מגרשים עם הצעה תקינה אחת בלבד, כל התקופה. התווית: מספר · חלק ממגרשי היזם.</p><div class="chart" id="c-single" data-source="by_dev_period"></div></div>
+      <div class="card"><h3>חציון המתחרים במגרשים שנזכו</h3><p class="note">הצעות תקינות למגרש, כל התקופה. יותר מתחרים: זכייה בשוק מבוקש.</p><div class="chart" id="c-bids" data-source="by_dev_period"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="insights" aria-labelledby="ins-h">
+    <h2 id="ins-h">קריאה אסטרטגית</h2>
+    <ul class="ins card" id="ins-list" data-source="insights"></ul>
+  </section>
+
+  <section class="sec" id="terms" aria-labelledby="terms-h">
+    <div class="sechead"><h2 id="terms-h">תנאי המכרזים שבהם זכה כל יזם</h2></div>
+    <p class="lede">כפי שפורסמו ברמ״י: סוגי המכרז, מחיר הסף מול השומה, מגבלת המגרשים למציע, והמכרזים הגדולים. לחיצה על כרטיס ממקדת.</p>
+    <div class="tcards" id="tcards" data-source="terms_by_dev"></div>
+  </section>
+
+  <section class="card sec" id="all" aria-labelledby="all-h">
+    <h2 id="all-h">כל הנתונים</h2>
+    <label class="note" for="metric">כל מדד בנתונים, לפי תחום: גרף שלוש תקופות, מהמוקדמת לאחרונה וטבלה עם השינוי בין 12 החודשים האחרונים לקודמים.</label>
+    <select id="metric"></select>
+    <div class="chart" id="c-all" data-source="by_dev_period" style="min-height:280px"></div>
+    <div class="tw"><table id="all-table" data-source="wide" data-row-key="key"><thead><tr>
+      <th data-field="developer">יזם</th><th data-field="P1" class="n">04–10/2024 (חלקי)</th><th data-field="P2" class="n">10/2024–10/2025</th><th data-field="P3" class="n">10/2025–10/2026</th><th data-field="chg" class="n">שינוי</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="card method" id="method" aria-labelledby="method-h">
+    <h2 id="method-h">שיטה ומקורות</h2>
+    <p><b>השאלה:</b> מי מבין היזמים המובילים קונה קרקע במשמעת מחיר, ומי משלם ביוקר. כל המספרים, התוויות והתובנות מחושבים בקוד מנתוני המגרשים.</p>
+    <p><b>מקור:</b> רשות מקרקעי ישראל, API אתר המכרזים: כל המכרזים עם תוצאות שוועדתם התכנסה מ־1.4.2024 עד 19.10.2026, נשלפו ב־19.10.2026. שמות המרחבים וסוגי המכרז לפי טבלאות הקודים של רמ״י. הסכומים פורסמו בשקלים והומרו פעם אחת למיליוני ₪; נומינליים, ללא הצמדה. אין במקור הצגה מחדש.</p>
+    <p><b>היזמים:</b> שבע החברות עם סכום הזכיות הגבוה ביותר כולל הוצאות פיתוח, מבין אלה שזכו גם ב־12 החודשים האחרונים וגם ב־12 שלפניהם. שמות שנבדלים רק בכתיב (בע״מ, פיסוק) אוחדו לחברה אחת. יזם שזכה רק בתקופה אחת, כמו גינדי, לא נכלל. הצבע של כל יזם קבוע בכל הגרפים, לפי סדר ההיקף.</p>
+    <p><b>זכיות במשותף:</b> כשכמה חברות זוכות יחד, המקור לא מפרסם את חלקה של כל אחת. לכן הסכומים, ההיקף והדירוג כוללים רק זכיות לבד, וזכיות במשותף מוצגות בסכום המלא כמדד נפרד ("כל הנתונים"). בחציונים (מול שומה, פער, מתחרים) נכללים גם מגרשים במשותף, כי הם משקפים הצעה שהחברה הייתה שותפה לה.</p>
+    <p><b>כיסוי:</b> כל <span id="m-cov"></span> המכרזים עם תוצאות בטווח נשלפו במלואם. זכיות שלפני 1.4.2024 לא בטווח.</p>
+    <p><b>תקופות:</b> 12 החודשים האחרונים (20.10.2025–19.10.2026), 12 החודשים שלפניהם, ותקופה ראשונה חלקית (1.4.2024–19.10.2024). "מול השנה הקודמת" משווה את שתי התקופות המלאות.</p>
+    <p><b>הגדרות:</b> זכייה מול שומה = סכום הזכייה חלקי שומת המגרש, פחות 1. פער מההצעה השנייה = הזכייה חלקי ההצעה התקינה הבאה שאינה גבוהה ממנה, פחות 1; הצעות שרמ״י סימנה כפסולות לא נספרות. כסף על השולחן = סכום הזכייה פחות ההצעה השנייה. יחידות דיור מפורסמות למכרז כולו ונספרות ליזם רק כשזכה בכל המגרשים שהוצעו בו; מחיר ליח״ד מחושב רק ממכרזים כאלה.</p>
+    <p><b>שקלול שלי:</b> דירוג עוצמת הרכישה, ובחירת כיוון "טוב" בכל מדד, הם שלי ולא מדד מקובל בשוק. גם ספי התובנות (השומה כקו אדום, ריכוז מעל חצי מההיקף במכרז אחד) הם הבחירה שלי.</p>
+    <p><b>נתונים חסרים:</b> במגרש בלי הצעה שנייה תקינה אין פער; במגרש בלי שומה אין יחס לשומה; במכרז עם זוכים נוספים אין יחידות ליזם. הם לא נכללים בחציון ומוצגים "אין נתון".</p>
+    <p><b>בדיקות:</b> הסכומים, החציונים וכסף על השולחן חושבו מחדש ישירות מקובץ המקור והתאימו. כל הצעה שסומנה כזוכה שווה בדיוק לסכום הזכייה שפורסם.</p>
+    <p><b>במקום מה:</b> המבנה לקוח מדשבורד השוואה פיננסי (חוב, EBITDA, כיסוי ריבית); קובץ ההשוואה לא צורף, ולכן הוחל על נתוני המכרזים: מפת סיכון → מפת תמחור, דירוג חוסן → דירוג עוצמת רכישה, תנאי מימון → תנאי המכרזים.</p>
+  </section>
+</div>
+

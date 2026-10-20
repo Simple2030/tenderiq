@@ -1,0 +1,82 @@
+<style>
+/* Question: who among the leading developers buys land with discipline, and who pays up for it.
+   Layout: header (takeaway, focus chips, nav) → 6 tiles → pricing map → composite ranking → domain sections → strategic read → tender terms cards → all-data explorer → method */
+#dash-root{--dash-gutter:clamp(12px,3vw,32px)}
+.dv{direction:rtl;font-family:var(--font-anthropic-sans);color:var(--color-fg);display:grid;gap:var(--cds-gap-xl);max-width:1280px;margin-inline:auto}
+.dv h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+.dv h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.dv h3{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);margin:0}
+.dv .sub{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:2px 0 0}
+.dv .note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:2px 0 8px;max-width:80ch;line-height:1.5}
+.dv .lede{font-size:var(--cds-font-size-body);color:var(--color-fg-muted);margin:0;max-width:90ch;line-height:1.6}
+.dv .take{font-size:var(--cds-font-size-body);margin:10px 0 0;max-width:95ch;line-height:1.7}
+.dv .take b,.dv .ins b,.dv .tcard b{font-weight:600}
+.dv .sec{display:grid;gap:var(--cds-gap-md)}
+.dv .sechead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.dv .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.dv .chip{font:inherit;font-size:var(--cds-font-size-caption);padding:5px 12px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.dv .chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dv .chip[aria-pressed="true"]{border-color:var(--color-fg);box-shadow:inset 0 0 0 1px var(--color-fg)}
+.dv button:focus-visible,.dv tr:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+.dv .nav{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:10px;font-size:var(--cds-font-size-caption)}
+.dv .nav button{all:unset;cursor:pointer;color:var(--color-fg-muted);border-bottom:1px solid transparent}
+.dv .nav button:hover{color:var(--color-fg);border-bottom-color:var(--color-fg)}
+.dv .card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);min-width:0;position:relative}
+.dv .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.dv .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr));gap:var(--cds-gap-md)}
+.dv .kpi{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-md) var(--cds-pad-lg);display:grid;gap:2px;align-content:start;min-width:0}
+.dv .kpi label{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.dv .kpi .v{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dv .kpi .v small{font-family:var(--font-anthropic-sans);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.dv .kpi .d{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.dv .good{color:var(--color-ok)} .dv .bad{color:var(--color-bad)}
+.dv .chart{min-height:180px;width:100%}
+.dv .chart svg{display:block;direction:ltr}
+.dv .chart text{font-family:var(--font-anthropic-sans);font-size:11px;fill:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.dv .chart text.lab{fill:var(--color-fg);font-size:12px}
+.dv .chart text.quad{font-style:italic;fill:var(--color-fg-muted);font-size:11px}
+.dv .tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);line-height:1.55;max-width:260px;z-index:5}
+.dv .tip .t{color:var(--cds-text-secondary)}
+.dv .tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-inline-end:5px}
+.dv .legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:6px}
+.dv .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:5px;vertical-align:-1px}
+.dv .tw{overflow-x:auto;max-height:520px;overflow-y:auto}
+.dv table{width:100%;border-collapse:collapse;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.dv th{position:sticky;top:0;background:var(--color-panel);text-align:right;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);padding:6px 8px;border-bottom:1px solid var(--color-border-line);white-space:nowrap;z-index:1}
+.dv td{padding:7px 8px;border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.dv td.n,.dv th.n{text-align:left}
+.dv tbody tr{cursor:pointer}
+.dv tr.dim td{opacity:.45}
+.dv tr.hi td{font-weight:600}
+.dv td.rk{text-align:center;font-family:var(--font-anthropic-serif);font-size:var(--cds-font-size-heading)}
+.dv td .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:6px}
+.dv .ins{display:grid;gap:10px;list-style:none;margin:0;padding:0}
+.dv .ins li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--color-border-line)}
+.dv .pill{font-size:11px;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--color-border-line);color:var(--color-fg-muted)}
+.dv .pill.bad{border-color:color-mix(in srgb,var(--color-bad) 45%,transparent);color:var(--color-bad);background:color-mix(in srgb,var(--color-bad) 8%,transparent)}
+.dv .pill.warn{border-color:color-mix(in srgb,var(--color-warn) 45%,transparent);color:var(--color-warn);background:color-mix(in srgb,var(--color-warn) 8%,transparent)}
+.dv .pill.ok{border-color:color-mix(in srgb,var(--color-ok) 45%,transparent);color:var(--color-ok);background:color-mix(in srgb,var(--color-ok) 8%,transparent)}
+.dv .ins .x{font-size:var(--cds-font-size-body);line-height:1.6}
+.dv .ins .so{display:block;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.dv .tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:var(--cds-gap-md)}
+.dv .tcard{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-md) var(--cds-pad-lg);display:grid;gap:6px;min-width:0;align-content:start;cursor:pointer}
+.dv .tcard h3{display:flex;align-items:center;gap:8px}
+.dv .tcard h3 i{width:10px;height:10px;border-radius:50%}
+.dv .tcard dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:var(--cds-font-size-caption)}
+.dv .tcard dt{color:var(--color-fg-muted)}
+.dv .tcard dd{margin:0;font-variant-numeric:tabular-nums}
+.dv .tcard ul{margin:4px 0 0;padding:0;list-style:none;font-size:var(--cds-font-size-caption);display:grid;gap:2px}
+.dv .tcard li{display:flex;justify-content:space-between;gap:8px}
+.dv .tcard li span:last-child{color:var(--color-fg-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dv .tcard.dim{opacity:.45}
+.dv select{font:inherit;font-size:var(--cds-font-size-body);padding:6px 10px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);border-radius:var(--cds-radius);max-width:100%}
+.dv .mine{font-size:11px;border:1px dashed var(--color-warn);color:var(--color-warn);padding:1px 8px;border-radius:999px;white-space:nowrap}
+.dv .method{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);display:grid;gap:6px}
+.dv .method p{margin:0;max-width:110ch;line-height:1.6}
+.dv .method b{color:var(--color-fg)}
+.dv a{color:inherit}
+.dv [data-dash-source-state=empty]{color:transparent}
+.dv [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+.dv .fail{display:flex;align-items:center;justify-content:center;gap:6px;min-height:120px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.dv .fail::before{content:"";width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad)}
+</style>
