@@ -10,12 +10,14 @@ winner, winning bid, reserve price, development costs, lot area, gush/helka,
 and every bid placed on the lot.
 
 Derived metrics, each computed only when its inputs exist in the source:
-  bidders            number of bids on the lot (mpHatzaaotMitcham)
+  bidders            number of valid bids on the lot (mpHatzaaotMitcham,
+                     excluding bids marked disqualified)
+  disqualified       number of bids marked disqualified
   vs_appraisal_pct   winning bid / land appraisal - 1       (needs mechirShuma)
   premium_pct        winning bid / reserve price - 1        (needs MechirSaf).
-                     The reserve is published at a fraction of the appraisal
-                     (median about a quarter), so this ratio says how low the
-                     reserve was, not how hard bidders competed.
+                     The reserve is published well below the appraisal and
+                     varies widely between tenders, so this ratio says how low
+                     the reserve was, not how hard bidders competed.
   win_rank           position of the winning bid among all bids, 1 = highest
   runner_up          the next bid below the winning bid; a second bid equal
                      to the winning bid counts, giving a 0% gap
@@ -145,6 +147,7 @@ def place_name(code, hood, cities):
 def build(raw, cities, codes):
     lots = []
     dropped = {"unpriced": 0, "system": 0, "no_winner": 0}
+    lots_offered = {}
     for key, body in raw["categories"].items():
         for entry in body["tenders"]:
             b, det = entry["basic"], entry["details"]
@@ -152,6 +155,7 @@ def build(raw, cities, codes):
             sug, yeud = b.get("KodSugMichraz"), b.get("KodYeudMichraz")
             cat = segment(sug, yeud, pos(b.get("YechidotDiur")))
             place, mapped = place_name(b.get("KodYeshuv"), hood, cities)
+            lots_offered[b.get("MichrazID")] = len(det.get("Tik") or [])
             for tik in det.get("Tik") or []:
                 winner = (tik.get("ShemZoche") or "").strip()
                 if not winner:
@@ -207,7 +211,7 @@ def build(raw, cities, codes):
                     "gush": ", ".join(f'{g.get("Gush", "")}/{g.get("Helka", "")}'
                                       for g in tik.get("GushHelka") or []) or None,
                     "bids": bid_rows,
-                    "bidders": len(bid_rows) or None,
+                    "bidders": len(sums) or None,
                     "disqualified": sum(1 for r in bid_rows if r["dq"]),
                     "win_rank": 1 + sum(1 for x in sums if x > win) if sums else None,
                     "vs_appraisal_pct": (win / appraisal - 1) * 100 if appraisal else None,
@@ -220,16 +224,17 @@ def build(raw, cities, codes):
                     "dev_share_pct": dev / (win + dev) * 100 if dev else None,
                 })
     # Housing units are published per tender, not per lot. A winner gets the
-    # tender's units only when it won every priced lot of that tender;
-    # otherwise units stay empty for its lots rather than being split.
+    # tender's units only when it won every lot the tender offered, all at a
+    # price; otherwise units stay empty for its lots rather than being split.
     by_tender = {}
     for lot in lots:
         by_tender.setdefault(lot["tender_id"], []).append(lot)
-    for group in by_tender.values():
+    for tid, group in by_tender.items():
         winners = {l["winner"] for l in group}
+        whole = len(winners) == 1 and len(group) == lots_offered.get(tid)
         for i, lot in enumerate(group):
-            lot["units_attributed"] = lot["tender_units"] if len(winners) == 1 and i == 0 else None
-            lot["units_partial"] = len(winners) > 1 and bool(lot["tender_units"])
+            lot["units_attributed"] = lot["tender_units"] if whole and i == 0 else None
+            lot["units_partial"] = not whole and bool(lot["tender_units"])
 
     # Guard against the source repeating a lot within a tender: same lot, winner,
     # amount, appraisal, area, development costs and bid list. Keep the first, flag the rest so they
